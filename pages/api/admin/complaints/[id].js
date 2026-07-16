@@ -1,7 +1,8 @@
 import { requireAdminApi } from "../../../../lib/session";
 import { getComplaintById, updateComplaintStatus, STATUSES } from "../../../../lib/complaints";
+import { applySecurityHeaders } from "../../../../lib/securityHeaders";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
   if (!admin) return;
 
@@ -39,4 +40,9 @@ export default async function handler(req, res) {
 
   res.setHeader("Allow", ["GET", "PATCH"]);
   return res.status(405).json({ error: "Method not allowed." });
+}
+
+export default function wrappedHandler(req, res) {
+  applySecurityHeaders(res);
+  return handler(req, res);
 }

@@ -1,6 +1,9 @@
+import { useState } from "react";
 import Link from "next/link";
 
 export default function SiteHeader() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
@@ -10,7 +13,9 @@ export default function SiteHeader() {
             Nirbhoy
           </span>
         </Link>
-        <nav className="flex items-center gap-1 font-body text-sm">
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-1 font-body text-sm">
           <Link href="/feed" className="btn-ghost">
             জনসাধারণের ফিড
           </Link>
@@ -24,7 +29,49 @@ export default function SiteHeader() {
             রিপোর্ট করুন
           </Link>
         </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden rounded-md p-2 text-text-muted hover:text-text-primary transition-colors"
+          aria-label="মেনু"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {menuOpen ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </>
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-border bg-elevated">
+          <nav className="flex flex-col gap-1 px-6 py-4 font-body text-sm">
+            <Link href="/feed" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
+              জনসাধারণের ফিড
+            </Link>
+            <Link href="/track" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
+              স্ট্যাটাস দেখুন
+            </Link>
+            <Link href="/how-it-works" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
+              কীভাবে কাজ করে
+            </Link>
+            <Link href="/submit" className="btn-primary w-full mt-2" onClick={() => setMenuOpen(false)}>
+              রিপোর্ট করুন
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

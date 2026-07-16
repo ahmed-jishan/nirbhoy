@@ -22,6 +22,7 @@ export default function AdminHeader({ email }) {
           <nav className="flex items-center gap-1 font-body text-sm">
             <Link href="/admin" className="btn-ghost">অপেক্ষমাণ রিপোর্ট</Link>
             <Link href="/admin/published" className="btn-ghost">প্রকাশিত</Link>
+            <Link href="/admin/stats" className="btn-ghost">পরিসংখ্যান</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">

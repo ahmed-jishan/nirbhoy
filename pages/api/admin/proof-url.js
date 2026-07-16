@@ -1,8 +1,9 @@
 import { requireAdminApi } from "../../../lib/session";
 import { getComplaintById } from "../../../lib/complaints";
 import { signedProofUrl } from "../../../lib/cloudinary";
+import { applySecurityHeaders } from "../../../lib/securityHeaders";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
   if (!admin) return;
 
@@ -29,4 +30,9 @@ export default async function handler(req, res) {
     console.error("GET /api/admin/proof-url failed:", err);
     return res.status(500).json({ error: "Could not generate links for these files." });
   }
+}
+
+export default function wrappedHandler(req, res) {
+  applySecurityHeaders(res);
+  return handler(req, res);
 }

@@ -1,13 +1,23 @@
 import { createComplaint, listPublishedComplaints } from "../../../lib/complaints";
+import { withRateLimit } from "../../../lib/rateLimit";
+import { applySecurityHeaders } from "../../../lib/securityHeaders";
+import { verifyTurnstileToken } from "../../../lib/captcha";
+import { notifyNewComplaint, notifyUrgentIncident } from "../../../lib/email";
 
 const MAX_TITLE = 140;
 const MAX_DESC = 4000;
 const MAX_LOCATION = 200;
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "POST") {
     try {
-      const { type, title, description, location, proofs } = req.body || {};
+      const { type, title, description, location, proofs, captchaToken } = req.body || {};
+
+      // Verify CAPTCHA if configured
+      const captchaValid = await verifyTurnstileToken(captchaToken);
+      if (!captchaValid) {
+        return res.status(400).json({ error: "CAPTCHA যাচাই ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।" });
+      }
 
       if (!["incident", "grievance"].includes(type)) {
         return res.status(400).json({ error: "Invalid complaint type." });
@@ -36,6 +46,12 @@ export default async function handler(req, res) {
         proofs: Array.isArray(proofs) ? proofs : [],
       });
 
+      // Send notifications (non-blocking — don't await)
+      notifyNewComplaint(caseId, title.trim(), type);
+      if (type === "incident") {
+        notifyUrgentIncident(caseId, title.trim(), description.trim());
+      }
+
       return res.status(201).json({ caseId });
     } catch (err) {
       console.error("POST /api/complaints failed:", err);
@@ -56,4 +72,13 @@ export default async function handler(req, res) {
 
   res.setHeader("Allow", ["GET", "POST"]);
   return res.status(405).json({ error: "Method not allowed." });
+}
+
+// Wrap with rate limiting on POST (submissions) and security headers on all
+export default function wrappedHandler(req, res) {
+  applySecurityHeaders(res);
+  if (req.method === "POST") {
+    return withRateLimit(handler)(req, res);
+  }
+  return handler(req, res);
 }

@@ -60,12 +60,13 @@ async function main() {
   await admin.firestore().collection("admins").doc(userRecord.uid).set(
     {
       email,
+      role: "moderator",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
 
-  console.log(`Added ${email} to the admins allowlist in Firestore.`);
+  console.log(`Added ${email} to the admins allowlist in Firestore (role: moderator).`);
   console.log("You can now log in at /admin/login with this email and password.");
   process.exit(0);
 }

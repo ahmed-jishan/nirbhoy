@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
+import { getTurnstileSiteKey } from "../lib/captcha";
 
 const MAX_TOTAL_MB = 30;
 const MAX_TOTAL_BYTES = MAX_TOTAL_MB * 1024 * 1024;
@@ -53,6 +54,9 @@ export default function Submit() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [caseId, setCaseId] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaRef = useRef(null);
+  const turnstileSiteKey = getTurnstileSiteKey();
 
   function handleFileChange(e) {
     setError("");
@@ -120,6 +124,7 @@ export default function Submit() {
           description,
           location,
           proofs,
+          captchaToken,
         }),
       });
       const data = await res.json();
@@ -286,13 +291,26 @@ export default function Submit() {
             )}
           </div>
 
+          {/* Cloudflare Turnstile CAPTCHA */}
+          {turnstileSiteKey && (
+            <div>
+              <div
+                ref={captchaRef}
+                className="cf-turnstile"
+                data-sitekey={turnstileSiteKey}
+                data-callback={(token) => setCaptchaToken(token)}
+                data-theme="dark"
+              />
+            </div>
+          )}
+
           {error && (
             <p className="rounded-md border border-danger/40 bg-danger-soft px-4 py-3 font-body text-sm text-danger">
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={submitting} className="btn-primary w-full">
+          <button type="submit" disabled={submitting || (turnstileSiteKey && !captchaToken)} className="btn-primary w-full">
             {submitting
               ? uploading
                 ? `ফাইল আপলোড হচ্ছে… (${Object.values(fileProgress).filter((p) => p === 100).length}/${files.length})`

@@ -1,7 +1,8 @@
 import { requireAdminApi } from "../../../../lib/session";
 import { listComplaintsForAdmin } from "../../../../lib/complaints";
+import { applySecurityHeaders } from "../../../../lib/securityHeaders";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
   if (!admin) return; // requireAdminApi already sent the 401
 
@@ -18,4 +19,9 @@ export default async function handler(req, res) {
     console.error("GET /api/admin/complaints failed:", err);
     return res.status(500).json({ error: "Could not load complaints." });
   }
+}
+
+export default function wrappedHandler(req, res) {
+  applySecurityHeaders(res);
+  return handler(req, res);
 }

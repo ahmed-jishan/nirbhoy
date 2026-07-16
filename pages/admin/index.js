@@ -59,51 +59,81 @@ export default function AdminDashboard({ admin }) {
         </div>
 
         <div className="mt-6 overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-left font-body text-sm">
-            <thead>
-              <tr className="border-b border-border bg-elevated text-xs uppercase tracking-wider text-text-faint">
-                <th className="px-4 py-3 font-medium">কেস</th>
-                <th className="px-4 py-3 font-medium">ধরন</th>
-                <th className="px-4 py-3 font-medium">শিরোনাম</th>
-                <th className="px-4 py-3 font-medium">প্রমাণ</th>
-                <th className="px-4 py-3 font-medium">স্ট্যাটাস</th>
-                <th className="px-4 py-3 font-medium">জমার তারিখ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-text-muted">লোড হচ্ছে…</td></tr>
-              )}
-              {error && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-danger">{error}</td></tr>
-              )}
-              {!loading && !error && items.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-text-muted">এই তালিকায় কিছু নেই।</td></tr>
-              )}
-              {items.map((item) => (
-                <tr key={item.id} className="border-b border-border last:border-0 hover:bg-elevated/60">
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-amber hover:underline">
-                      {item.caseId}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-text-muted">{TYPE_LABEL[item.type] || item.type}</td>
-                  <td className="px-4 py-3 text-text-primary">
-                    <Link href={`/admin/review/${item.id}`} className="hover:underline">{item.title}</Link>
-                  </td>
-                  <td className="px-4 py-3 text-text-muted">
-                    {item.proofCount > 0
-                      ? `${item.proofCount}টি ফাইল`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-                  <td className="px-4 py-3 font-mono text-xs text-text-faint">
-                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString("bn-BD") : ""}
-                  </td>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <table className="w-full text-left font-body text-sm">
+              <thead>
+                <tr className="border-b border-border bg-elevated text-xs uppercase tracking-wider text-text-faint">
+                  <th className="px-4 py-3 font-medium">কেস</th>
+                  <th className="px-4 py-3 font-medium">ধরন</th>
+                  <th className="px-4 py-3 font-medium">শিরোনাম</th>
+                  <th className="px-4 py-3 font-medium">প্রমাণ</th>
+                  <th className="px-4 py-3 font-medium">স্ট্যাটাস</th>
+                  <th className="px-4 py-3 font-medium">জমার তারিখ</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-text-muted">লোড হচ্ছে…</td></tr>
+                )}
+                {error && (
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-danger">{error}</td></tr>
+                )}
+                {!loading && !error && items.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-text-muted">এই তালিকায় কিছু নেই।</td></tr>
+                )}
+                {items.map((item) => (
+                  <tr key={item.id} className="border-b border-border last:border-0 hover:bg-elevated/60">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-amber hover:underline">
+                        {item.caseId}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-text-muted">{TYPE_LABEL[item.type] || item.type}</td>
+                    <td className="px-4 py-3 text-text-primary">
+                      <Link href={`/admin/review/${item.id}`} className="hover:underline">{item.title}</Link>
+                    </td>
+                    <td className="px-4 py-3 text-text-muted">
+                      {item.proofCount > 0 ? `${item.proofCount}টি ফাইল` : "—"}
+                    </td>
+                    <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
+                    <td className="px-4 py-3 font-mono text-xs text-text-faint">
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString("bn-BD") : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-3 p-3">
+            {loading && <p className="px-4 py-6 text-center text-text-muted">লোড হচ্ছে…</p>}
+            {error && <p className="px-4 py-6 text-center text-danger">{error}</p>}
+            {!loading && !error && items.length === 0 && (
+              <p className="px-4 py-6 text-center text-text-muted">এই তালিকায় কিছু নেই।</p>
+            )}
+            {items.map((item) => (
+              <Link
+                key={item.id}
+                href={`/admin/review/${item.id}`}
+                className="block rounded-lg border border-border bg-elevated/60 p-4 hover:bg-elevated transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-xs text-amber">{item.caseId}</span>
+                  <StatusBadge status={item.status} />
+                </div>
+                <p className="font-body text-sm text-text-primary font-medium truncate">{item.title}</p>
+                <div className="mt-2 flex items-center justify-between font-mono text-xs text-text-faint">
+                  <span>{TYPE_LABEL[item.type] || item.type}</span>
+                  <span>
+                    {item.proofCount > 0 ? `${item.proofCount}টি ফাইল` : "—"} ·
+                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString("bn-BD") : ""}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </>
