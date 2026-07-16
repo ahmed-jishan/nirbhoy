@@ -7,30 +7,28 @@ export default function SiteHeader() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 group">
           <LanternMark />
-          <span className="font-display text-lg font-semibold tracking-tight text-text-primary">
+          <span className="font-display text-lg font-semibold tracking-tight text-text-primary group-hover:animate-glitch">
             Nirbhoy
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 font-body text-sm">
-          <Link href="/feed" className="btn-ghost">
-            জনসাধারণের ফিড
+          <Link href="/feed" className="btn-ghost font-mono text-xs tracking-wider">
+            {'>'} ফিড
           </Link>
-          <Link href="/track" className="btn-ghost">
-            স্ট্যাটাস দেখুন
+          <Link href="/track" className="btn-ghost font-mono text-xs tracking-wider">
+            {'>'} স্ট্যাটাস
           </Link>
-          <Link href="/how-it-works" className="btn-ghost">
-            কীভাবে কাজ করে
+          <Link href="/how-it-works" className="btn-ghost font-mono text-xs tracking-wider">
+            {'>'} কীভাবে
           </Link>
-          <Link href="/submit" className="btn-primary ml-2 !px-4 !py-2">
-            রিপোর্ট করুন
+          <Link href="/submit" className="btn-secondary ml-2 !px-4 !py-2">
+            [ রিপোর্ট করুন ]
           </Link>
         </nav>
 
-        {/* Mobile hamburger */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden rounded-md p-2 text-text-muted hover:text-text-primary transition-colors"
@@ -53,21 +51,20 @@ export default function SiteHeader() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-border bg-elevated">
           <nav className="flex flex-col gap-1 px-6 py-4 font-body text-sm">
-            <Link href="/feed" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
-              জনসাধারণের ফিড
+            <Link href="/feed" className="btn-ghost w-full justify-start font-mono" onClick={() => setMenuOpen(false)}>
+              {'>'} জনসাধারণের ফিড
             </Link>
-            <Link href="/track" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
-              স্ট্যাটাস দেখুন
+            <Link href="/track" className="btn-ghost w-full justify-start font-mono" onClick={() => setMenuOpen(false)}>
+              {'>'} স্ট্যাটাস দেখুন
             </Link>
-            <Link href="/how-it-works" className="btn-ghost w-full justify-start" onClick={() => setMenuOpen(false)}>
-              কীভাবে কাজ করে
+            <Link href="/how-it-works" className="btn-ghost w-full justify-start font-mono" onClick={() => setMenuOpen(false)}>
+              {'>'} কীভাবে কাজ করে
             </Link>
-            <Link href="/submit" className="btn-primary w-full mt-2" onClick={() => setMenuOpen(false)}>
-              রিপোর্ট করুন
+            <Link href="/submit" className="btn-secondary w-full mt-2" onClick={() => setMenuOpen(false)}>
+              [ রিপোর্ট করুন ]
             </Link>
           </nav>
         </div>

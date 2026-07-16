@@ -2,6 +2,7 @@ import { requireAdminApi } from "../../../lib/session";
 import { getComplaintById } from "../../../lib/complaints";
 import { signedProofUrl } from "../../../lib/cloudinary";
 import { applySecurityHeaders } from "../../../lib/securityHeaders";
+import { logger } from "../../../lib/logger";
 
 async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
@@ -27,7 +28,7 @@ async function handler(req, res) {
 
     return res.status(200).json({ urls, expiresInSeconds: 300 });
   } catch (err) {
-    console.error("GET /api/admin/proof-url failed:", err);
+    logger.error({ err, id }, "GET /api/admin/proof-url failed");
     return res.status(500).json({ error: "Could not generate links for these files." });
   }
 }

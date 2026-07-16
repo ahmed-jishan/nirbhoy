@@ -3,6 +3,7 @@ import { withRateLimit } from "../../../lib/rateLimit";
 import { applySecurityHeaders } from "../../../lib/securityHeaders";
 import { verifyTurnstileToken } from "../../../lib/captcha";
 import { notifyNewComplaint, notifyUrgentIncident } from "../../../lib/email";
+import { logger } from "../../../lib/logger";
 
 const MAX_TITLE = 140;
 const MAX_DESC = 4000;
@@ -34,15 +35,11 @@ async function handler(req, res) {
       if (description.length > MAX_DESC) {
         return res.status(400).json({ error: `Description must be under ${MAX_DESC} characters.` });
       }
-      if (location && location.length > MAX_LOCATION) {
-        return res.status(400).json({ error: `Location must be under ${MAX_LOCATION} characters.` });
-      }
-
       const { caseId } = await createComplaint({
         type,
         title: title.trim(),
         description: description.trim(),
-        location: (location || "").trim(),
+        location: location || "",
         proofs: Array.isArray(proofs) ? proofs : [],
       });
 
@@ -54,7 +51,7 @@ async function handler(req, res) {
 
       return res.status(201).json({ caseId });
     } catch (err) {
-      console.error("POST /api/complaints failed:", err);
+      logger.error({ err }, "POST /api/complaints failed");
       return res.status(500).json({ error: "Something went wrong while submitting. Please try again." });
     }
   }
@@ -65,7 +62,7 @@ async function handler(req, res) {
       const items = await listPublishedComplaints({ type: type && type !== "all" ? type : null });
       return res.status(200).json({ items });
     } catch (err) {
-      console.error("GET /api/complaints failed:", err);
+      logger.error({ err }, "GET /api/complaints failed");
       return res.status(500).json({ error: "Could not load the feed right now." });
     }
   }

@@ -17,16 +17,16 @@ export default function AdminHeader({ email }) {
           <Link href="/admin" className="flex items-center gap-2">
             <LanternMark size={20} />
             <span className="font-display text-base font-semibold text-text-primary">Nirbhoy</span>
-            <span className="font-mono text-xs text-text-faint">/ প্যানেল</span>
+            <span className="font-terminal text-xs text-accent">/ প্যানেল</span>
           </Link>
-          <nav className="flex items-center gap-1 font-body text-sm">
-            <Link href="/admin" className="btn-ghost">অপেক্ষমাণ রিপোর্ট</Link>
-            <Link href="/admin/published" className="btn-ghost">প্রকাশিত</Link>
-            <Link href="/admin/stats" className="btn-ghost">পরিসংখ্যান</Link>
+          <nav className="flex items-center gap-1 font-mono text-xs">
+            <Link href="/admin" className="btn-ghost">{'>'} অপেক্ষমাণ</Link>
+            <Link href="/admin/published" className="btn-ghost">{'>'} প্রকাশিত</Link>
+            <Link href="/admin/stats" className="btn-ghost">{'>'} পরিসংখ্যান</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {email && <span className="font-mono text-xs text-text-faint">{email}</span>}
+          {email && <span className="font-code text-xs text-text-faint">{email}</span>}
           <button onClick={handleLogout} className="btn-secondary !px-3 !py-1.5 text-xs">
             লগআউট
           </button>

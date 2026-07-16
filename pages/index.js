@@ -12,42 +12,51 @@ export default function Home() {
 
       <SiteHeader />
 
-      <section className="relative overflow-hidden bg-lantern">
+      <section className="relative overflow-hidden bg-lantern bg-accent">
         <div className="mx-auto grid max-w-5xl gap-12 px-6 py-20 md:grid-cols-[1.2fr,1fr] md:py-28">
-          <div>
-            <span className="case-stamp">NRB-2026-00147 · উদাহরণ</span>
+          <div className="animate-fade-in-up">
+            <span className="case-stamp">
+              <span className="term-ok">[ OK ]</span> NRB-2026-00147 · উদাহরণ
+            </span>
             <h1 className="mt-6 font-display text-4xl font-semibold leading-[1.15] text-text-primary md:text-5xl">
-              যা দেখেছেন, বলুন —<br /> নাম প্রকাশ ছাড়াই।
+              যা দেখেছেন, বলুন<span className="text-accent">_</span><br /> নাম প্রকাশ ছাড়াই।
             </h1>
-            <p className="mt-6 max-w-md font-body text-base leading-relaxed text-text-muted">
-              গ্রামে বা এলাকায় কিছু ভুল ঘটতে দেখলে, প্রমাণ থাকলেও প্রায়ই সরাসরি বলার সাহস হয় না।
+            <p className="mt-6 max-w-md font-code text-base leading-relaxed text-text-muted">
+              <span className="text-accent">{'>'}</span> গ্রামে বা এলাকায় কিছু ভুল ঘটতে দেখলে, প্রমাণ থাকলেও প্রায়ই সরাসরি বলার সাহস হয় না।
               Nirbhoy-এ আপনি সম্পূর্ণ পরিচয়গোপনে রিপোর্ট জমা দিতে পারবেন — কোনো নাম, ফোন নম্বর
               বা লোকেশন সংরক্ষণ করা হয় না।
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/submit" className="btn-primary">
+              <Link href="/submit" className="btn-primary animate-pulse-glow">
                 একটি রিপোর্ট জমা দিন
               </Link>
               <Link href="/feed" className="btn-secondary">
-                জনসাধারণের ফিড দেখুন
+                [ ফিড দেখুন ]
               </Link>
             </div>
-            <p className="mt-6 font-mono text-xs text-text-faint">
-              প্রতিটি রিপোর্ট একটি কেস নম্বর পায় — যাতে নাম ছাড়াই আপনি পরে অবস্থা যাচাই করতে পারেন।
+            <p className="mt-6 font-terminal text-xs text-text-faint">
+              <span className="term-info">$</span> প্রতিটি রিপোর্ট একটি কেস নম্বর পায় — যাতে নাম ছাড়াই আপনি পরে অবস্থা যাচাই করতে পারেন।
             </p>
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             <div className="card w-full max-w-sm">
-              <p className="font-mono text-[11px] uppercase tracking-wider text-text-faint">অ্যানোনিমাস রিপোর্ট</p>
-              <div className="mt-4 space-y-3">
-                <div className="h-2.5 w-3/4 rounded bg-elevated2" />
-                <div className="h-2.5 w-full rounded bg-elevated2" />
-                <div className="h-2.5 w-5/6 rounded bg-elevated2" />
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <span className="font-terminal text-xs text-accent">$ nirbhoy submit</span>
+                <span className="font-terminal text-[10px] text-text-faint">PID: 0x7f4e</span>
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+              <div className="mt-4 space-y-2 font-code text-xs text-text-muted">
+                <p><span className="text-accent">{'>'}</span> title: <span className="text-text-primary">&ldquo;গ্রামের রাস্তা সংস্কার&rdquo;</span></p>
+                <p><span className="text-accent">{'>'}</span> type: <span className="text-text-primary">grievance</span></p>
+                <p><span className="text-accent">{'>'}</span> location: <span className="text-text-primary">[REDACTED]</span></p>
+                <p><span className="text-accent">{'>'}</span> identity: <span className="text-accent">anonymous</span></p>
+                <div className="h-px bg-border my-2" />
+                <p className="text-text-faint">encrypting payload...</p>
+                <p className="text-accent">✓ report submitted successfully</p>
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
                 <span className="badge-reviewing">যাচাই চলছে</span>
-                <span className="font-mono text-xs text-text-faint">পরিচয় গোপন</span>
+                <span className="font-terminal text-xs text-accent">পরিচয় গোপন</span>
               </div>
             </div>
           </div>
@@ -55,7 +64,9 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="font-display text-2xl font-semibold text-text-primary">এটি কীভাবে নিরাপদ রাখে</h2>
+        <h2 className="font-display text-2xl font-semibold text-text-primary">
+          <span className="text-accent">#</span> এটি কীভাবে নিরাপদ রাখে
+        </h2>
         <div className="mt-8 grid gap-6 md:grid-cols-3">
           <TrustCard
             title="সরাসরি প্রকাশ হয় না"
@@ -81,7 +92,7 @@ function TrustCard({ title, body }) {
   return (
     <div className="card">
       <h3 className="font-display text-lg font-medium text-text-primary">{title}</h3>
-      <p className="mt-2 font-body text-sm leading-relaxed text-text-muted">{body}</p>
+      <p className="mt-2 font-code text-sm leading-relaxed text-text-muted">{body}</p>
     </div>
   );
 }

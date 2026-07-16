@@ -1,6 +1,7 @@
 import { requireAdminApi } from "../../../../lib/session";
 import { getComplaintById, updateComplaintStatus, STATUSES } from "../../../../lib/complaints";
 import { applySecurityHeaders } from "../../../../lib/securityHeaders";
+import { logger } from "../../../../lib/logger";
 
 async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
@@ -14,7 +15,7 @@ async function handler(req, res) {
       if (!complaint) return res.status(404).json({ error: "Not found." });
       return res.status(200).json({ complaint });
     } catch (err) {
-      console.error("GET /api/admin/complaints/[id] failed:", err);
+      logger.error({ err, id }, "GET /api/admin/complaints/[id] failed");
       return res.status(500).json({ error: "Could not load this report." });
     }
   }
@@ -33,7 +34,7 @@ async function handler(req, res) {
       const complaint = await updateComplaintStatus(id, { status, publicTitle, publicSummary, rejectionReason });
       return res.status(200).json({ complaint });
     } catch (err) {
-      console.error("PATCH /api/admin/complaints/[id] failed:", err);
+      logger.error({ err, id, status: req.body?.status }, "PATCH /api/admin/complaints/[id] failed");
       return res.status(500).json({ error: "Could not update this report." });
     }
   }

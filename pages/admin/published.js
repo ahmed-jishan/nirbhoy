@@ -16,7 +16,14 @@ export default function AdminPublished({ admin }) {
     setLoading(true);
     fetch(`/api/admin/complaints?status=published`)
       .then((r) => r.json())
-      .then((d) => setItems(d.items || []))
+      .then((d) => {
+        if (d.pagination) {
+          setItems(d.items || []);
+        } else {
+          // Fallback for backward compatibility
+          setItems(d.items || []);
+        }
+      })
       .finally(() => setLoading(false));
   }
 

@@ -1,6 +1,7 @@
 import { requireAdminApi } from "../../../../lib/session";
-import { listComplaintsForAdmin } from "../../../../lib/complaints";
+import { listComplaintsForAdmin, DEFAULT_PAGE_SIZE } from "../../../../lib/complaints";
 import { applySecurityHeaders } from "../../../../lib/securityHeaders";
+import { logger } from "../../../../lib/logger";
 
 async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
@@ -11,12 +12,20 @@ async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed." });
   }
 
+  const status = typeof req.query.status === "string" ? req.query.status : "pending";
+
   try {
-    const status = typeof req.query.status === "string" ? req.query.status : "pending";
-    const items = await listComplaintsForAdmin({ status });
-    return res.status(200).json({ items });
+    const limit = parseInt(req.query.limit) || DEFAULT_PAGE_SIZE;
+    const startAfter = typeof req.query.startAfter === "string" ? req.query.startAfter : null;
+    
+    const { items, hasMore, lastId } = await listComplaintsForAdmin({ status, limit, startAfter });
+    
+    return res.status(200).json({ 
+      items, 
+      pagination: { hasMore, lastId, pageSize: limit }
+    });
   } catch (err) {
-    console.error("GET /api/admin/complaints failed:", err);
+    logger.error({ err, status }, "GET /api/admin/complaints failed");
     return res.status(500).json({ error: "Could not load complaints." });
   }
 }

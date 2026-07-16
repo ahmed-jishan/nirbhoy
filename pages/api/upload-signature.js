@@ -1,5 +1,6 @@
 import { getCloudinary } from "../../lib/cloudinary";
 import { randomUUID } from "crypto";
+import { logger } from "../../lib/logger";
 
 const FOLDER = "nirbhoy/proofs";
 
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
       type: "authenticated",
     });
   } catch (err) {
-    console.error("POST /api/upload-signature failed:", err);
+    logger.error({ err }, "POST /api/upload-signature failed");
     return res.status(500).json({ error: "Could not prepare file upload right now." });
   }
 }

@@ -1,5 +1,6 @@
 import { adminAuth, adminDb } from "../../../lib/firebaseAdmin";
 import { createSessionCookie, sessionCookieHeader, clearSessionCookieHeader } from "../../../lib/session";
+import { logger } from "../../../lib/logger";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
       res.setHeader("Set-Cookie", sessionCookieHeader(sessionCookie, 12 * 60 * 60));
       return res.status(200).json({ ok: true });
     } catch (err) {
-      console.error("POST /api/admin/session failed:", err);
+      logger.error({ err }, "POST /api/admin/session failed");
       return res.status(401).json({ error: "Login failed. Please check your email and password." });
     }
   }

@@ -1,5 +1,6 @@
 import { getComplaintStatusByCaseId } from "../../../lib/complaints";
 import { applySecurityHeaders } from "../../../lib/securityHeaders";
+import { logger } from "../../../lib/logger";
 
 async function handler(req, res) {
   if (req.method !== "GET") {
@@ -19,7 +20,7 @@ async function handler(req, res) {
     }
     return res.status(200).json(result);
   } catch (err) {
-    console.error("GET /api/complaints/status failed:", err);
+      logger.error({ err, caseId }, "GET /api/complaints/status failed");
     return res.status(500).json({ error: "Could not check status right now." });
   }
 }

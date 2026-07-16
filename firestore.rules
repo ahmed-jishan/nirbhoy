@@ -1,10 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Nirbhoy never reads or writes Firestore from the browser — every
-    // read/write goes through Next.js API routes using the Admin SDK,
-    // which bypasses these rules entirely. So client access is fully
-    // locked down here as defense in depth.
+    // ── Complaints collection ──────────────────────────────────────────
+    // Anonymous submissions go through Admin SDK (bypasses rules).
+    // Admin users can read/update complaints.
+    // Only server-side Admin SDK can create (anonymous flow).
+    match /complaints/{docId} {
+      // Allow admin read with valid auth
+      allow read: if request.auth != null;
+      
+      // Disallow direct client writes; use Admin SDK server-side
+      allow create: if false;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+    
+    // ── Admin users collection ─────────────────────────────────────────
+    match /admins/{uid} {
+      // Only authenticated admins can list/read
+      allow read: if request.auth != null;
+      
+      // Only super_admin can manage admin records
+      allow write: if request.auth != null 
+                    && request.auth.token.uid != null
+                    && get(/databases/$(database)/documents/admins/$(request.auth.token.uid)).data.role == 'super_admin';
+    }
+    
+    // ── Counters collection ────────────────────────────────────────────
+    match /counters/{docId} {
+      // Prevent direct client access; Admin SDK only
+      allow read, write: if false;
+    }
+    
+    // ── Default deny ──────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,0 +1,154 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev, staging]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Quality Checks ──────────────────────────────────────────────────────
+  quality:
+    name: 🔍 Code Quality & Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run unit tests
+        run: npm test
+        env:
+          FIREBASE_PROJECT_ID: "test-project"
+          FIREBASE_CLIENT_EMAIL: "test@test.com"
+          FIREBASE_PRIVATE_KEY: "test-key"
+          CLOUDINARY_CLOUD_NAME: "test-cloud"
+          CLOUDINARY_API_KEY: "test-api-key"
+          CLOUDINARY_API_SECRET: "test-api-secret"
+          NODE_ENV: "test"
+
+      - name: 🏗️ Build project
+        run: npm run build
+        env:
+          FIREBASE_PROJECT_ID: "test-project"
+          FIREBASE_CLIENT_EMAIL: "test@test.com"
+          FIREBASE_PRIVATE_KEY: "test-key"
+          CLOUDINARY_CLOUD_NAME: "test-cloud"
+          CLOUDINARY_API_KEY: "test-api-key"
+          CLOUDINARY_API_SECRET: "test-api-secret"
+          NEXT_PUBLIC_FIREBASE_API_KEY: "test-api-key"
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "test.firebaseapp.com"
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: "test-project"
+          NODE_ENV: "production"
+
+  # ── Linting ─────────────────────────────────────────────────────────────
+  lint:
+    name: 📝 Lint Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+        continue-on-error: true # Don't fail CI on lint warnings initially
+
+  # ── Dependency Audit ────────────────────────────────────────────────────
+  audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=high || true # Warn but don't fail
+
+  # ── Deploy (production branch only) ─────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy
+    needs: [quality, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build for production
+        run: npm run build
+        env:
+          # These would come from GitHub Secrets in a real setup
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NODE_ENV: "production"
+
+      - name: 📦 Export static files (if needed)
+        run: npx next export -o out || echo "Skip export (not static)"
+
+      # Example: Deploy to Vercel / Netlify / Firebase Hosting
+      # Uncomment and configure for your hosting provider:
+      #
+      # - name: 🚀 Deploy to Vercel
+      #   uses: amondnet/vercel-action@v20
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     vercel-args: "--prod"
+
+      - name: ✅ Deployment ready
+        run: echo "Build successful — ready for deployment"

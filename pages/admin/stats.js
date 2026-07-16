@@ -68,7 +68,7 @@ export default function AdminStats({ admin }) {
               <div className="card mt-8">
                 <h3 className="font-display text-base font-medium text-text-primary">গত ৩০ দিনের রিপোর্ট</h3>
                 <div className="mt-4 flex items-end gap-1 h-32">
-                  {stats.dailyCounts.map((d, i) => {
+                  {stats.dailyCounts.map((d, _i) => {
                     const max = Math.max(...stats.dailyCounts.map((x) => x.count), 1);
                     const height = (d.count / max) * 100;
                     return (

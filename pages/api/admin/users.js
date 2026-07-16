@@ -1,6 +1,7 @@
 import { requireAdminApi } from "../../../lib/session";
 import { applySecurityHeaders } from "../../../lib/securityHeaders";
 import { adminDb } from "../../../lib/firebaseAdmin";
+import { logger } from "../../../lib/logger";
 
 const ROLES = ["super_admin", "moderator", "viewer"];
 
@@ -23,7 +24,7 @@ async function handler(req, res) {
       }));
       return res.status(200).json({ users });
     } catch (err) {
-      console.error("GET /api/admin/users failed:", err);
+      logger.error({ err }, "GET /api/admin/users failed");
       return res.status(500).json({ error: "Could not load users." });
     }
   }
@@ -37,7 +38,7 @@ async function handler(req, res) {
       await adminDb().collection("admins").doc(uid).update({ role });
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error("PATCH /api/admin/users failed:", err);
+      logger.error({ err, uid: req.body?.uid }, "PATCH /api/admin/users failed");
       return res.status(500).json({ error: "Could not update user." });
     }
   }

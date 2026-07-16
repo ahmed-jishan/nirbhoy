@@ -1,6 +1,7 @@
 import { requireAdminApi } from "../../../lib/session";
 import { applySecurityHeaders } from "../../../lib/securityHeaders";
 import { adminDb } from "../../../lib/firebaseAdmin";
+import { logger } from "../../../lib/logger";
 
 async function handler(req, res) {
   const admin = await requireAdminApi(req, res);
@@ -57,7 +58,7 @@ async function handler(req, res) {
       },
     });
   } catch (err) {
-    console.error("GET /api/admin/stats failed:", err);
+    logger.error({ err }, "GET /api/admin/stats failed");
     return res.status(500).json({ error: "Could not load statistics." });
   }
 }

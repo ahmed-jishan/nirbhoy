@@ -3,9 +3,6 @@ import { useEffect, useRef, useState } from "react";
 const TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = "&copy; <a href='https://openstreetmap.org/copyright'>OpenStreetMap</a>";
 
-// In-memory cache for map markers (no localStorage to protect privacy)
-let markersCache = [];
-
 export default function MapView({ items = [], className = "" }) {
   const mapContainer = useRef(null);
   const mapInstance = useRef(null);
@@ -14,7 +11,6 @@ export default function MapView({ items = [], className = "" }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Load Leaflet dynamically (not included by default)
     const loadMap = async () => {
       try {
         const L = await import("leaflet");
@@ -22,7 +18,6 @@ export default function MapView({ items = [], className = "" }) {
 
         if (!mapContainer.current || mapInstance.current) return;
 
-        // Fix default marker icon
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -30,7 +25,6 @@ export default function MapView({ items = [], className = "" }) {
           shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
 
-        // Center on Bangladesh by default
         const map = L.map(mapContainer.current, {
           center: [23.685, 90.3563],
           zoom: 7,
@@ -62,7 +56,6 @@ export default function MapView({ items = [], className = "" }) {
     };
   }, []);
 
-  // Update markers when items change
   useEffect(() => {
     if (!loaded || !mapInstance.current || !markerLayer.current) return;
 
@@ -70,44 +63,38 @@ export default function MapView({ items = [], className = "" }) {
 
     if (!items || items.length === 0) return;
 
-    const L = window.L; // Leaflet loaded globally
+    const L = window.L;
     const bounds = [];
-    const bangladeshBounds = L.latLngBounds(
-      [20.5, 88.0], // SW corner
-      [26.7, 92.7]  // NE corner
-    );
+    const bangladeshBounds = L.latLngBounds([20.5, 88.0], [26.7, 92.7]);
 
     items.forEach((item) => {
-      // If item has lat/lng, use it. Otherwise, random position near a major city
-      // This ensures location privacy while showing approximate area
-      let lat, lng;
-      
-      if (item.lat && item.lng) {
-        lat = item.lat;
-        lng = item.lng;
-      } else {
-        return; // Skip items without location data
-      }
+      if (!item.lat || !item.lng) return;
 
-      const marker = L.marker([lat, lng], {
+      const marker = L.marker([item.lat, item.lng], {
         title: item.title || item.caseId,
       });
 
       marker.bindPopup(`
-        <div style="font-family: sans-serif; min-width: 200px;">
-          <p style="font-size: 11px; color: #888; margin: 0 0 4px;">${item.caseId || ""}</p>
-          <p style="font-size: 14px; font-weight: 600; margin: 0 0 4px; color: #222;">${item.title || ""}</p>
-          ${item.summary ? `<p style="font-size: 12px; color: #555; margin: 0;">${item.summary.substring(0, 100)}...</p>` : ""}
-          <p style="font-size: 11px; color: #888; margin: 4px 0 0;">
-            ${item.type === "incident" ? "অপরাধ" : "অভিযোগ"} · ${item.location || ""}
-          </p>
+        <div style="font-family: 'Space Grotesk', system-ui, sans-serif; min-width: 220px; background: #0A0E15; color: #E1E4E8; border: 1px solid rgba(232,163,61,0.3);">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding:12px;">
+            <span style="font-family:'VT323',monospace;font-size:12px;color:#E8A33D;">${item.caseId || ""}</span>
+            <span style="font-family:'VT323',monospace;font-size:10px;color:#505A6B;">$$ PID</span>
+          </div>
+          <div style="padding:12px;">
+            <p style="font-size:14px;font-weight:600;margin:0 0 6px;color:#E1E4E8;">${item.title || ""}</p>
+            ${item.summary ? `<p style="font-size:12px;color:#7D8899;margin:0 0 8px;border-left:2px solid #E8A33D;padding-left:8px;">${item.summary.substring(0, 120)}...</p>` : ""}
+            <div style="display:flex;justify-content:space-between;font-family:'VT323',monospace;font-size:11px;color:#505A6B;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:4px;">
+              <span>${item.type === "incident" ? "অপরাধ" : "অভিযোগ"}</span>
+              <span style="color:#E8A33D;">${item.location ? item.location.split(",").slice(0, 2).join(", ") : ""}</span>
+            </div>
+          </div>
         </div>
       `);
 
       markerLayer.current.addLayer(marker);
 
-      if (bangladeshBounds.contains([lat, lng])) {
-        bounds.push([lat, lng]);
+      if (bangladeshBounds.contains([item.lat, item.lng])) {
+        bounds.push([item.lat, item.lng]);
       }
     });
 
@@ -118,76 +105,20 @@ export default function MapView({ items = [], className = "" }) {
 
   if (error) {
     return (
-      <div className={`rounded-lg border border-border bg-elevated p-6 text-center ${className}`}>
-        <p className="font-body text-sm text-text-muted">{error}</p>
+      <div className={`rounded-none border border-danger/40 bg-danger-soft p-6 text-center ${className}`}>
+        <p className="font-code text-sm text-danger"><span className="term-err">[!]</span> {error}</p>
       </div>
     );
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-border ${className}`}>
-      <div ref={mapContainer} className="h-[400px] w-full" style={{ background: "#141B24" }} />
+    <div className={`rounded-none overflow-hidden border border-border ${className}`}>
+      <div ref={mapContainer} className="h-[400px] w-full" style={{ background: "#10171F" }} />
       {!loaded && (
         <div className="h-[400px] flex items-center justify-center bg-elevated">
-          <p className="font-body text-sm text-text-muted">মানচিত্র লোড হচ্ছে…</p>
+          <p className="font-terminal text-sm text-amber animate-pulse">$ loading map...</p>
         </div>
       )}
     </div>
   );
-}
-
-/**
- * Convert a location string to approximate coordinates (for geocoding)
- * Uses OpenStreetMap Nominatim API (free, no key required)
- */
-export async function geocodeLocation(locationString) {
-  if (!locationString || locationString.trim().length < 3) return null;
-
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString + ", Bangladesh")}&limit=1&countrycodes=bd`,
-      {
-        headers: {
-          "User-Agent": "Nirbhoy/1.0 (civic complaint platform)",
-        },
-      }
-    );
-    const data = await res.json();
-    if (data && data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon),
-        displayName: data[0].display_name,
-      };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Get approximate location for a division/district name in Bangladesh
- * Fallback when Nominatim fails
- */
-export function getApproximateLocation(locationString) {
-  const locations = {
-    "ঢাকা": { lat: 23.8103, lng: 90.4125 },
-    "চট্টগ্রাম": { lat: 22.3569, lng: 91.7832 },
-    "খুলনা": { lat: 22.8456, lng: 89.5403 },
-    "রাজশাহী": { lat: 24.3745, lng: 88.6042 },
-    "সিলেট": { lat: 24.8949, lng: 91.8687 },
-    "বরিশাল": { lat: 22.7010, lng: 90.3535 },
-    "রংপুর": { lat: 25.7439, lng: 89.2752 },
-    "ময়মনসিংহ": { lat: 24.7471, lng: 90.4203 },
-  };
-
-  for (const [name, coords] of Object.entries(locations)) {
-    if (locationString.includes(name)) {
-      return coords;
-    }
-  }
-
-  // Return Dhaka as default
-  return { lat: 23.8103, lng: 90.4125 };
 }
