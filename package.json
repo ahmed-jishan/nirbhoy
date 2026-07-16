@@ -10,7 +10,6 @@
     "create-admin": "node scripts/create-admin.js"
   },
   "dependencies": {
-    "@sentry/nextjs": "^10.65.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "cloudinary": "2.3.0",
