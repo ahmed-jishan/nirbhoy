@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Nirbhoy never reads or writes Firestore from the browser — every
+    // read/write goes through Next.js API routes using the Admin SDK,
+    // which bypasses these rules entirely. So client access is fully
+    // locked down here as defense in depth.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

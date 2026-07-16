@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-bg text-text-primary font-body antialiased;
+    background-image: radial-gradient(circle at 78% 8%, rgba(232, 163, 61, 0.10), transparent 40%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  ::selection {
+    background: rgba(232, 163, 61, 0.28);
+  }
+  :focus-visible {
+    outline: 2px solid #E8A33D;
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .case-stamp {
+    @apply inline-flex items-center gap-2 rounded-sm border border-amber/40 bg-amber-soft/60 px-3 py-1.5 font-mono text-xs tracking-wider text-amber;
+    transform: rotate(-1deg);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-amber px-5 py-3 font-body text-sm font-semibold text-bg transition-colors hover:bg-amber-dim disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-borderStrong bg-elevated px-5 py-3 font-body text-sm font-semibold text-text-primary transition-colors hover:border-amber/50 hover:bg-elevated2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 font-body text-sm text-text-muted transition-colors hover:text-text-primary;
+  }
+
+  .card {
+    @apply rounded-lg border border-border bg-elevated/80 p-6;
+  }
+
+  .field-label {
+    @apply mb-2 block font-body text-sm font-medium text-text-primary;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-borderStrong bg-bg px-4 py-3 font-body text-sm text-text-primary placeholder:text-text-faint focus:border-amber/60 focus:outline-none;
+  }
+
+  .field-hint {
+    @apply mt-1.5 font-body text-xs text-text-muted;
+  }
+
+  .badge-pending {
+    @apply rounded-full bg-elevated2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-text-muted;
+  }
+  .badge-reviewing {
+    @apply rounded-full bg-amber-soft px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-amber;
+  }
+  .badge-published {
+    @apply rounded-full bg-teal-soft px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-teal;
+  }
+  .badge-rejected {
+    @apply rounded-full bg-danger-soft px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-danger;
+  }
+}
