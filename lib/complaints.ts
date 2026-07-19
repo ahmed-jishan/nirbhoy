@@ -280,7 +280,9 @@ export async function createComplaint(input) {
 
   if (typeof input.location === "object" && input.location !== null) {
     const loc = input.location;
-    // Build a human-readable location string from structured data
+    // Build a human-readable location string from structured data. Prefer
+    // the address returned by the map picker if we have one — it's much
+    // more descriptive than what the dropdowns alone can express.
     const parts = [];
     if (loc.detail) parts.push(loc.detail);
     if (loc.city) parts.push(loc.city);
@@ -291,8 +293,32 @@ export async function createComplaint(input) {
     if (loc.postalCode) parts.push(loc.postalCode);
     location = parts.join(", ");
 
+    // Step 0: If the user picked an exact point on the map, trust it. This
+    // is the most precise signal we can get — a user-verified crime pin.
+    const pickedLat = typeof loc.lat === "number" ? loc.lat : null;
+    const pickedLng = typeof loc.lng === "number" ? loc.lng : null;
+    if (
+      pickedLat !== null &&
+      pickedLng !== null &&
+      Number.isFinite(pickedLat) &&
+      Number.isFinite(pickedLng) &&
+      pickedLat >= 20 &&
+      pickedLat <= 27 &&
+      pickedLng >= 88 &&
+      pickedLng <= 93
+    ) {
+      lat = pickedLat;
+      lng = pickedLng;
+      locationPrecision = "exact";
+      // If the picker returned a reverse-geocoded address, prefer it as
+      // the user-facing location string so the feed shows something real.
+      if (loc.pickedAddress && typeof loc.pickedAddress === "string" && loc.pickedAddress.trim()) {
+        location = loc.pickedAddress.trim();
+      }
+    }
+
     // Step 1: Try Nominatim for exact street-level geocoding if detail provided
-    if (loc.detail && loc.detail.trim().length > 3) {
+    if (lat === null && loc.detail && loc.detail.trim().length > 3) {
       const nominatimQuery = [loc.detail, loc.thana, loc.district, "Bangladesh"]
         .filter(Boolean)
         .join(", ");
@@ -482,6 +508,11 @@ export async function getComplaintById(id) {
     title: d.title,
     description: d.description,
     location: d.location,
+    // Expose the raw pin coordinates so the admin review page can render
+    // the exact user-selected spot on a map.
+    lat: typeof d.lat === "number" ? d.lat : null,
+    lng: typeof d.lng === "number" ? d.lng : null,
+    locationPrecision: d.locationPrecision || "district",
     proofs: d.proofs || (d.proofPublicId ? [{ publicId: d.proofPublicId, resourceType: d.proofResourceType || "image" }] : []),
     status: d.status,
     publicTitle: d.publicTitle,

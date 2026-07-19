@@ -1,9 +1,20 @@
 import { useState, useRef, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { getTurnstileSiteKey } from "../lib/captcha";
+
+// Leaflet uses `window` at import time, so pull the picker in client-only.
+const MapPicker = dynamic(() => import("../components/MapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-md border border-borderStrong bg-elevated/60 h-[380px] flex items-center justify-center">
+      <p className="font-terminal text-sm text-text-muted animate-pulse">$ loading picker...</p>
+    </div>
+  ),
+});
 
 const MAX_TOTAL_MB = 30;
 const MAX_TOTAL_BYTES = MAX_TOTAL_MB * 1024 * 1024;
@@ -162,6 +173,10 @@ export default function Submit() {
   const [postOffice, setPostOffice] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
+  // Exact geo-coordinates picked from the map (optional). When set, this
+  // overrides thana/district approximation for map plotting.
+  const [pickedLocation, setPickedLocation] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
   const [files, setFiles] = useState([]);
   const [fileProgress, setFileProgress] = useState({});
   const [uploading, setUploading] = useState(false);
@@ -273,6 +288,11 @@ export default function Submit() {
         postOffice: postOffice || "",
         postalCode: postalCode || "",
         detail: locationDetail || "",
+        // If the user picked an exact spot on the map, include the raw
+        // coordinates so the backend can store precision: "exact".
+        lat: pickedLocation ? pickedLocation.lat : null,
+        lng: pickedLocation ? pickedLocation.lng : null,
+        pickedAddress: pickedLocation ? pickedLocation.address || "" : "",
       };
 
       const res = await fetch("/api/complaints", {
@@ -501,6 +521,70 @@ export default function Submit() {
             <p className="field-hint mt-2">
               $ প্রথমে বিভাগ নির্বাচন করুন → তারপর জেলা → তারপর থানা। জেলা ও থানা বাধ্যতামূলক।
             </p>
+
+            {/* Exact map pin — optional but recommended */}
+            <div className="mt-5 rounded-md border border-borderStrong bg-elevated/40 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-code text-sm font-medium text-text-primary">
+                    <span className="text-accent">{'>'}</span> সঠিক অবস্থান পিন করুন (ঐচ্ছিক)
+                  </p>
+                  <p className="mt-1 font-code text-xs leading-relaxed text-text-muted">
+                    মানচিত্রে সরাসরি ঘটনাস্থল দেখাতে পারলে রিপোর্টটি অনেক বেশি নির্ভুল হবে।
+                    আপনার ব্যক্তিগত তথ্য সংরক্ষণ হবে না — শুধু ঘটনার লোকেশন প্রকাশ পাবে।
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPicker((v) => !v)}
+                  className={`shrink-0 rounded-md border px-3 py-1.5 font-terminal text-xs transition-colors ${
+                    showPicker
+                      ? "border-accent/60 bg-accent-soft text-accent"
+                      : "border-borderStrong text-text-muted hover:text-accent hover:border-accent/40"
+                  }`}
+                >
+                  {showPicker ? "লুকান" : pickedLocation ? "সম্পাদনা" : "মানচিত্র খুলুন"}
+                </button>
+              </div>
+
+              {/* Compact summary when picker is closed but a pin is set */}
+              {!showPicker && pickedLocation && (
+                <div className="mt-3 rounded-md border border-accent/30 bg-accent-soft/40 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-terminal text-[11px] text-accent tracking-wider">
+                        $ pinned_location
+                      </p>
+                      {pickedLocation.address && (
+                        <p className="mt-1 font-code text-xs text-text-primary break-words">
+                          {pickedLocation.address}
+                        </p>
+                      )}
+                      <p className="mt-1 font-terminal text-[10px] text-text-faint">
+                        LAT {pickedLocation.lat.toFixed(6)} · LNG {pickedLocation.lng.toFixed(6)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPickedLocation(null)}
+                      className="shrink-0 rounded-md border border-danger/40 px-2 py-1 font-terminal text-[10px] text-danger hover:bg-danger hover:text-bg transition-colors"
+                    >
+                      মুছুন
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showPicker && (
+                <div className="mt-4">
+                  <MapPicker
+                    value={pickedLocation}
+                    onChange={setPickedLocation}
+                    height={380}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Files */}

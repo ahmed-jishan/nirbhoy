@@ -1,24 +1,75 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Head from "next/head";
+import dynamic from "next/dynamic";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
-import MapView from "../components/MapView";
 
-const TYPE_LABEL = { incident: "অপরাধ / ঘটনা", grievance: "সাধারণ অভিযোগ" };
+// Leaflet touches `window`, so render the map view only on the client.
+const MapView = dynamic(() => import("../components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-md border border-border bg-elevated/60 h-[520px] flex items-center justify-center">
+      <p className="font-terminal text-sm text-text-muted animate-pulse">$ loading map...</p>
+    </div>
+  ),
+});
+
+// The 3D modal is imported lazily so MapLibre only ships to browsers that
+// actually open the 3D view. Keeps the primary 2D flow untouched.
+const Map3DModal = dynamic(() => import("../components/Map3DModal"), {
+  ssr: false,
+});
+
+
+const TYPE_LABEL: Record<string, string> = {
+  incident: "অপরাধ / ঘটনা",
+  grievance: "সাধারণ অভিযোগ",
+};
+
+const PRECISION_LABEL: Record<string, string> = {
+  exact: "সঠিক",
+  street: "রাস্তা",
+  thana: "থানা",
+  district: "জেলা",
+};
+
+// Numeric ordering so we can sort/priority-render exact pins first.
+const PRECISION_ORDER: Record<string, number> = {
+  exact: 0,
+  street: 1,
+  thana: 2,
+  district: 3,
+};
+
+// Attempts to guess the district from the human-readable location string.
+// Returns null if nothing matches — we surface only detected districts in
+// the filter dropdown so it stays clean.
+function extractDistrict(location: string, knownDistricts: Set<string>): string | null {
+  if (!location) return null;
+  for (const d of knownDistricts) {
+    if (location.includes(d)) return d;
+  }
+  return null;
+}
 
 export default function Feed() {
-  const [items, setItems] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [items, setItems] = useState<any[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [districtFilter, setDistrictFilter] = useState<string>("all");
+  const [precisionFilter, setPrecisionFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [viewMode, setViewMode] = useState("list");
-  const [activeCaseId, setActiveCaseId] = useState(null);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  // Which case is currently opened in the 3D modal (null = closed).
+  const [threeDCase, setThreeDCase] = useState<any | null>(null);
+
 
   useEffect(() => {
     setLoading(true);
     setError("");
     setActiveCaseId(null);
-    fetch(`/api/complaints?type=${filter}`)
+    fetch(`/api/complaints?type=${typeFilter}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
@@ -26,16 +77,64 @@ export default function Feed() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [filter]);
+  }, [typeFilter]);
 
-  const mapItems = items.filter((item) => item.lat && item.lng);
+  // Build the list of districts that actually appear in the fetched items.
+  // We only offer filters the user can act on — no empty dropdown options.
+  const districtOptions = useMemo(() => {
+    // Static list of known Bengali district names — mirrors the submit form.
+    const known = new Set<string>([
+      "ঢাকা", "চট্টগ্রাম", "খুলনা", "রাজশাহী", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ",
+      "কুমিল্লা", "নারায়ণগঞ্জ", "গাজীপুর", "বগুড়া", "যশোর", "কক্সবাজার", "দিনাজপুর",
+      "পাবনা", "টাঙ্গাইল", "নোয়াখালী", "ফেনী", "ব্রাহ্মণবাড়িয়া", "সিরাজগঞ্জ", "নাটোর",
+      "কুষ্টিয়া", "মাদারীপুর", "ফরিদপুর", "লক্ষ্মীপুর", "চাঁদপুর", "হবিগঞ্জ", "মৌলভীবাজার",
+      "সুনামগঞ্জ", "নেত্রকোনা", "কিশোরগঞ্জ", "মানিকগঞ্জ", "জামালপুর", "শেরপুর", "গোপালগঞ্জ",
+      "পটুয়াখালী", "ভোলা", "পিরোজপুর", "বরগুনা", "ঝালকাঠি", "সাতক্ষীরা", "মাগুরা",
+      "নড়াইল", "চুয়াডাঙ্গা", "মেহেরপুর", "ঝিনাইদহ", "রাজবাড়ী", "শরীয়তপুর", "মুন্সিগঞ্জ",
+      "নরসিংদী", "বান্দরবান", "রাঙ্গামাটি", "খাগড়াছড়ি", "লালমনিরহাট", "কুড়িগ্রাম",
+      "গাইবান্ধা", "নীলফামারী", "পঞ্চগড়", "ঠাকুরগাঁও", "জয়পুরহাট", "নওগাঁ",
+    ]);
+    const found = new Set<string>();
+    items.forEach((it) => {
+      const d = extractDistrict(it.location || "", known);
+      if (d) found.add(d);
+    });
+    return Array.from(found).sort();
+  }, [items]);
+
+  // Filter items by district + precision, then sort so exact pins bubble up.
+  const filteredItems = useMemo(() => {
+    const known = new Set(districtOptions);
+    return items
+      .filter((it) => {
+        if (districtFilter !== "all") {
+          const d = extractDistrict(it.location || "", known);
+          if (d !== districtFilter) return false;
+        }
+        if (precisionFilter !== "all") {
+          const p = it.locationPrecision || "district";
+          if (p !== precisionFilter) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // Exact-precision reports first, then by publish date.
+        const pa = PRECISION_ORDER[a.locationPrecision || "district"] ?? 3;
+        const pb = PRECISION_ORDER[b.locationPrecision || "district"] ?? 3;
+        if (pa !== pb) return pa - pb;
+        return (b.publishedAt || "").localeCompare(a.publishedAt || "");
+      });
+  }, [items, districtFilter, precisionFilter, districtOptions]);
+
+  const mapItems = filteredItems.filter((item) => item.lat && item.lng);
+  const exactCount = mapItems.filter((i) => i.locationPrecision === "exact").length;
 
   return (
     <>
       <Head><title>জনসাধারণের ফিড — Nirbhoy</title></Head>
       <SiteHeader />
 
-      <section className="mx-auto max-w-5xl px-6 py-14">
+      <section className="mx-auto max-w-6xl px-6 py-14">
         <div className="flex items-center gap-3">
           <span className="font-terminal text-sm text-text-muted">$</span>
           <h1 className="font-display text-3xl font-semibold text-text-primary">জনসাধারণের ফিড</h1>
@@ -44,30 +143,73 @@ export default function Feed() {
           এখানে শুধু যাচাইকৃত ও মডারেট করা সারাংশ দেখানো হয় — কোনো ব্যক্তির নাম কখনোই দেখানো হয় না।
         </p>
 
-        <div className="mt-8 flex flex-wrap gap-2 items-center justify-between">
-          <div className="flex gap-2">
-            {["all", "incident", "grievance"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilter(t)}
-                className={`rounded-none border px-4 py-1.5 font-terminal text-xs tracking-wider transition-colors ${
-                  filter === t
-                    ? "border-accent/60 bg-accent-glow text-accent"
-                    : "border-borderStrong text-text-muted hover:text-text-primary"
-                }`}
+        {/* Filters + view toggle */}
+        <div className="mt-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Type filter */}
+            <div className="flex gap-1">
+              {["all", "incident", "grievance"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  className={`rounded-none border px-3 py-1.5 font-terminal text-xs tracking-wider transition-colors ${
+                    typeFilter === t
+                      ? "border-accent/60 bg-accent-glow text-accent"
+                      : "border-borderStrong text-text-muted hover:text-text-primary"
+                  }`}
+                >
+                  {t === "all" ? "$ সব" : `$ ${TYPE_LABEL[t]}`}
+                </button>
+              ))}
+            </div>
+
+            {/* District filter */}
+            {districtOptions.length > 0 && (
+              <select
+                value={districtFilter}
+                onChange={(e) => setDistrictFilter(e.target.value)}
+                className="rounded-none border border-borderStrong bg-elevated px-3 py-1.5 font-terminal text-xs text-text-primary focus:border-accent/60 focus:outline-none"
               >
-                {t === "all" ? "$ সব" : `$ ${TYPE_LABEL[t]}`}
+                <option value="all">$ সব জেলা</option>
+                {districtOptions.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Precision filter */}
+            <select
+              value={precisionFilter}
+              onChange={(e) => setPrecisionFilter(e.target.value)}
+              className="rounded-none border border-borderStrong bg-elevated px-3 py-1.5 font-terminal text-xs text-text-primary focus:border-accent/60 focus:outline-none"
+              title="নির্ভুলতার স্তর"
+            >
+              <option value="all">$ যেকোনো স্তর</option>
+              <option value="exact">সঠিক অবস্থান</option>
+              <option value="street">রাস্তা স্তর</option>
+              <option value="thana">থানা স্তর</option>
+              <option value="district">জেলা স্তর</option>
+            </select>
+
+            {(districtFilter !== "all" || precisionFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDistrictFilter("all");
+                  setPrecisionFilter("all");
+                }}
+                className="rounded-none border border-border px-2.5 py-1.5 font-terminal text-xs text-text-faint hover:text-danger hover:border-danger/40 transition-colors"
+              >
+                ✕ ফিল্টার
               </button>
-            ))}
+            )}
           </div>
 
           <div className="flex gap-1 rounded-none border border-border p-1">
             <button
               onClick={() => setViewMode("list")}
               className={`rounded-none px-3 py-1.5 font-terminal text-xs transition-colors ${
-                viewMode === "list"
-                  ? "bg-accent text-bg"
-                  : "text-text-muted hover:text-text-primary"
+                viewMode === "list" ? "bg-accent text-bg" : "text-text-muted hover:text-text-primary"
               }`}
             >
               তালিকা
@@ -75,9 +217,7 @@ export default function Feed() {
             <button
               onClick={() => setViewMode("map")}
               className={`rounded-none px-3 py-1.5 font-terminal text-xs transition-colors ${
-                viewMode === "map"
-                  ? "bg-accent text-bg"
-                  : "text-text-muted hover:text-text-primary"
+                viewMode === "map" ? "bg-accent text-bg" : "text-text-muted hover:text-text-primary"
               }`}
             >
               মানচিত্র
@@ -93,41 +233,82 @@ export default function Feed() {
                   items={mapItems}
                   activeCaseId={activeCaseId}
                   onCaseSelect={setActiveCaseId}
+                  height={560}
                 />
-                {/* Mini case list for map interaction */}
-                <div className="max-h-[450px] overflow-y-auto space-y-2 rounded-md border border-border bg-elevated/60 p-3">
-                  <p className="font-terminal text-xs text-text-faint mb-2">
-                    $ লোকেশন সহ রিপোর্ট ({mapItems.length}টি)
-                  </p>
+                {/* Side list — exact-precision cases float to the top */}
+                <div className="max-h-[560px] overflow-y-auto space-y-2 rounded-md border border-border bg-elevated/60 p-3">
+                  <div className="sticky top-0 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-elevated/95 backdrop-blur-sm border-b border-border">
+                    <p className="font-terminal text-xs text-text-faint">
+                      $ লোকেশন সহ রিপোর্ট ({mapItems.length}টি)
+                    </p>
+                    {exactCount > 0 && (
+                      <p className="mt-1 font-terminal text-[10px] text-accent">
+                        ⚡ {exactCount}টি সঠিক অবস্থান
+                      </p>
+                    )}
+                  </div>
                   {mapItems.map((item) => (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => setActiveCaseId(item.caseId)}
-                      className={`w-full text-left rounded-md border p-3 transition-colors ${
+                      className={`w-full rounded-md border p-3 transition-colors ${
                         activeCaseId === item.caseId
                           ? "border-accent/60 bg-accent-soft/40"
+                          : item.locationPrecision === "exact"
+                          ? "border-accent/20 bg-elevated hover:border-accent/40"
                           : "border-border bg-elevated hover:border-accent/30"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-terminal text-xs text-accent">{item.caseId}</span>
-                        <span className="font-terminal text-[10px] text-text-faint">
-                          {item.locationPrecision === "street" ? "রাস্তা" :
-                           item.locationPrecision === "thana" ? "থানা" : "জেলা"}
-                        </span>
-                      </div>
-                      <p className="mt-1 font-code text-xs text-text-primary truncate">{item.title}</p>
-                      <p className="mt-0.5 font-terminal text-[10px] text-text-faint truncate">
-                        {item.location ? item.location.split(",").slice(0, 2).join(", ") : ""}
-                      </p>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCaseId(item.caseId)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-terminal text-xs text-accent">{item.caseId}</span>
+                          <span
+                            className={`font-terminal text-[10px] ${
+                              item.locationPrecision === "exact"
+                                ? "text-accent"
+                                : "text-text-faint"
+                            }`}
+                          >
+                            {item.locationPrecision === "exact" && "⚡ "}
+                            {PRECISION_LABEL[item.locationPrecision || "district"] || "জেলা"}
+                          </span>
+                        </div>
+                        <p className="mt-1 font-code text-xs text-text-primary line-clamp-2">
+                          {item.title}
+                        </p>
+                        <p className="mt-0.5 font-terminal text-[10px] text-text-faint truncate">
+                          {item.location ? item.location.split(",").slice(0, 2).join(", ") : ""}
+                        </p>
+                      </button>
+                      {/* Only offer 3D view for high-precision pins — for
+                          low-precision (thana/district) coordinates the
+                          building geometry wouldn't match reality anyway. */}
+                      {(item.locationPrecision === "exact" ||
+                        item.locationPrecision === "street") && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setThreeDCase(item);
+                          }}
+                          className="mt-2 w-full rounded-md border border-accent/30 bg-accent-soft/30 px-2 py-1 font-terminal text-[10px] text-accent hover:bg-accent hover:text-bg transition-colors"
+                          title="৩ডি মানচিত্রে দেখুন"
+                        >
+                          ⛰ ৩ডি ভিউ দেখুন
+                        </button>
+                      )}
+                    </div>
                   ))}
+
                 </div>
               </div>
             ) : (
               <div className="card text-center">
                 <p className="font-code text-sm text-text-muted">
-                  <span className="term-err">[!]</span> মানচিত্রে দেখানোর মতো কোনো লোকেশন-সহ রিপোর্ট নেই।
+                  <span className="term-err">[!]</span> এই ফিল্টারে মানচিত্রে দেখানোর মতো কোনো রিপোর্ট নেই।
                 </p>
               </div>
             )}
@@ -138,9 +319,7 @@ export default function Feed() {
           <div className="mt-8 space-y-4">
             {loading && (
               <div className="card text-center">
-                  <p className="font-terminal text-sm text-text-muted animate-pulse">
-                    $ loading...
-                  </p>
+                <p className="font-terminal text-sm text-text-muted animate-pulse">$ loading...</p>
               </div>
             )}
             {error && (
@@ -148,22 +327,31 @@ export default function Feed() {
                 <span className="term-err">[!]</span> {error}
               </p>
             )}
-            {!loading && !error && items.length === 0 && (
+            {!loading && !error && filteredItems.length === 0 && (
               <div className="card text-center">
                 <p className="font-code text-sm text-text-muted">
-                  <span className="term-info">$</span> এখনো কোনো প্রকাশিত রিপোর্ট নেই। প্রথম রিপোর্টটি আপনি জমা দিতে পারেন।
+                  <span className="term-info">$</span> {items.length === 0
+                    ? "এখনো কোনো প্রকাশিত রিপোর্ট নেই।"
+                    : "এই ফিল্টারে কোনো রিপোর্ট নেই।"}
                 </p>
               </div>
             )}
-            {items.map((item, idx) => (
+            {filteredItems.map((item, idx) => (
               <article key={item.id} className="card" style={{ animationDelay: `${idx * 0.05}s` }}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-terminal text-xs tracking-widest text-text-primary">
                     {item.caseId}
                   </span>
-                  <span className="badge-published">
-                    {TYPE_LABEL[item.type] || item.type}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {item.locationPrecision === "exact" && (
+                      <span className="rounded-none border border-accent/40 bg-accent-soft px-1.5 py-0.5 font-terminal text-[10px] text-accent">
+                        ⚡ সঠিক
+                      </span>
+                    )}
+                    <span className="badge-published">
+                      {TYPE_LABEL[item.type] || item.type}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="mt-3 font-display text-lg font-medium text-text-primary">{item.title}</h3>
                 {item.summary && (
@@ -171,7 +359,9 @@ export default function Feed() {
                 )}
                 <div className="mt-4 flex items-center justify-between font-terminal text-xs text-text-faint">
                   <span>{'>'} {item.location || "স্থান উল্লেখ নেই"}</span>
-                  <span>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("bn-BD") : ""}</span>
+                  <span>
+                    {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("bn-BD") : ""}
+                  </span>
                 </div>
               </article>
             ))}
@@ -180,12 +370,27 @@ export default function Feed() {
 
         {!loading && !error && items.length > 0 && (
           <p className="mt-8 text-center font-terminal text-xs text-text-faint">
-            $ মোট {items.length}টি রিপোর্ট · {mapItems.length}টি মানচিত্রে দেখানো যাবে
+            $ মোট {items.length}টি · ফিল্টারে {filteredItems.length}টি · মানচিত্রে {mapItems.length}টি
           </p>
         )}
       </section>
+
+      {/* 3D view modal — mounts only when a case is selected so the
+          MapLibre GL engine doesn't run unless the user opts in. */}
+      {threeDCase && (
+        <Map3DModal
+          open={!!threeDCase}
+          onClose={() => setThreeDCase(null)}
+          lat={threeDCase.lat}
+          lng={threeDCase.lng}
+          caseId={threeDCase.caseId}
+          title={threeDCase.title}
+          type={threeDCase.type}
+        />
+      )}
 
       <SiteFooter />
     </>
   );
 }
+

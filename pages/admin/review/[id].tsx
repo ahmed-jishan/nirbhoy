@@ -1,13 +1,36 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import AdminHeader from "../../../components/AdminHeader";
 import StatusBadge from "../../../components/StatusBadge";
 import { requireAdminPage } from "../../../lib/session";
+import { googleMapsLink, osmMapsLink } from "../../../lib/mapLinks";
+
+// Leaflet needs `window`, so keep the map view client-only.
+const MapView = dynamic(() => import("../../../components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-md border border-border bg-elevated/60 h-[300px] flex items-center justify-center">
+      <p className="font-terminal text-xs text-text-muted animate-pulse">$ loading map...</p>
+    </div>
+  ),
+});
+
+// 3D modal — MapLibre only ships when the admin actually opens the 3D view.
+const Map3DModal = dynamic(() => import("../../../components/Map3DModal"), {
+  ssr: false,
+});
 
 export const getServerSideProps = requireAdminPage;
 
 const TYPE_LABEL = { incident: "অপরাধ / ঘটনা", grievance: "সাধারণ অভিযোগ" };
+const PRECISION_LABEL = {
+  exact: "সঠিক অবস্থান (ব্যবহারকারী পিন করেছেন)",
+  street: "রাস্তা স্তর",
+  thana: "থানা স্তর",
+  district: "জেলা স্তর",
+};
 const FETCH_TIMEOUT = 15000; // 15 seconds
 
 export default function ReviewComplaint({ admin }) {
@@ -27,6 +50,8 @@ export default function ReviewComplaint({ admin }) {
   const [proofUrls, setProofUrls] = useState([]);
   const [proofLoading, setProofLoading] = useState(false);
   const [selectedProof, setSelectedProof] = useState(null);
+  // 3D modal toggle — the modal handles its own MapLibre lifecycle.
+  const [show3D, setShow3D] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -186,6 +211,26 @@ export default function ReviewComplaint({ admin }) {
                 <dt className="font-mono text-xs text-text-faint">স্থান</dt>
                 <dd className="text-text-primary">{complaint.location || "উল্লেখ নেই"}</dd>
               </div>
+              {complaint.lat && complaint.lng && (
+                <div>
+                  <dt className="font-mono text-xs text-text-faint">নির্ভুলতা</dt>
+                  <dd className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] ${
+                        complaint.locationPrecision === "exact"
+                          ? "border-accent/50 bg-accent-soft text-accent"
+                          : "border-border text-text-muted"
+                      }`}
+                    >
+                      {complaint.locationPrecision === "exact" && "⚡ "}
+                      {PRECISION_LABEL[complaint.locationPrecision] || "জেলা স্তর"}
+                    </span>
+                    <span className="font-mono text-[11px] text-text-faint">
+                      LAT {complaint.lat.toFixed(6)} · LNG {complaint.lng.toFixed(6)}
+                    </span>
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="font-mono text-xs text-text-faint">জমার সময়</dt>
                 <dd className="text-text-primary">
@@ -193,6 +238,72 @@ export default function ReviewComplaint({ admin }) {
                 </dd>
               </div>
             </dl>
+
+            {/* Location map — shows the exact pin the user placed, or the
+                thana/district approximation. Also exposes deep links to
+                Google Maps / OSM so admins can verify or share externally. */}
+            {complaint.lat && complaint.lng && (
+              <div className="mt-5 border-t border-border pt-4">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="font-mono text-xs text-text-faint">
+                    {complaint.locationPrecision === "exact"
+                      ? "📍 ব্যবহারকারী পিন করা লোকেশন"
+                      : "📍 আনুমানিক লোকেশন"}
+                  </p>
+                  <div className="flex gap-1">
+                    <a
+                      href={googleMapsLink(complaint.lat, complaint.lng)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors"
+                    >
+                      Google Maps ↗
+                    </a>
+                    <a
+                      href={osmMapsLink(complaint.lat, complaint.lng)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors"
+                    >
+                      OSM ↗
+                    </a>
+                    {/* Only offer 3D view for high-precision coords —
+                        rendering 3D buildings around a thana-centroid
+                        approximation would be misleading. */}
+                    {(complaint.locationPrecision === "exact" ||
+                      complaint.locationPrecision === "street") && (
+                      <button
+                        type="button"
+                        onClick={() => setShow3D(true)}
+                        className="rounded-md border border-accent/40 bg-accent-soft/40 px-2 py-0.5 font-mono text-[10px] text-accent hover:bg-accent hover:text-bg transition-colors"
+                      >
+                        ⛰ ৩ডি ভিউ
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <MapView
+                  items={[
+                    {
+                      id: complaint.id,
+                      caseId: complaint.caseId,
+                      type: complaint.type,
+                      title: complaint.title,
+                      summary: complaint.description
+                        ? complaint.description.substring(0, 120)
+                        : "",
+                      location: complaint.location,
+                      lat: complaint.lat,
+                      lng: complaint.lng,
+                      locationPrecision: complaint.locationPrecision || "district",
+                      publishedAt: complaint.publishedAt || complaint.createdAt,
+                    },
+                  ]}
+                  activeCaseId={complaint.caseId}
+                  height={320}
+                />
+              </div>
+            )}
 
             {/* Proof files section */}
             {complaint.proofs && complaint.proofs.length > 0 ? (
@@ -320,6 +431,19 @@ export default function ReviewComplaint({ admin }) {
           </div>
         </div>
       </section>
+
+      {/* 3D view modal — mounts only when opened, unmounts on close. */}
+      {show3D && complaint.lat && complaint.lng && (
+        <Map3DModal
+          open={show3D}
+          onClose={() => setShow3D(false)}
+          lat={complaint.lat}
+          lng={complaint.lng}
+          caseId={complaint.caseId}
+          title={complaint.title}
+          type={complaint.type}
+        />
+      )}
     </>
   );
 }
