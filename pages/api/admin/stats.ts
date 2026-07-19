@@ -28,6 +28,11 @@ async function handler(req, res) {
     let grievanceCount = 0;
     let withProof = 0;
     const dailyCounts = {};
+    const divisionCounts = {};
+    const districtCounts = {};
+
+    // Known Bangladesh divisions for parsing
+    const DIVISIONS = ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ"];
 
     allSnap.forEach((doc) => {
       const d = doc.data();
@@ -39,7 +44,62 @@ async function handler(req, res) {
         const date = d.createdAt.toDate().toISOString().split("T")[0];
         dailyCounts[date] = (dailyCounts[date] || 0) + 1;
       }
+
+      // Parse location for division and district
+      const locationStr = d.location || "";
+      const parts = locationStr.split(",").map((s) => s.trim()).filter(Boolean);
+      
+      // Location format: detail, city, thana, district, division, postOffice, postalCode
+      // Division is typically the 4th index (0-based), district is 3rd
+      let division = "";
+      let district = "";
+
+      // Try to find division from parts
+      for (const p of parts) {
+        if (DIVISIONS.includes(p)) {
+          division = p;
+          break;
+        }
+      }
+
+      // District is usually the part before division
+      if (division) {
+        const divIndex = parts.indexOf(division);
+        if (divIndex > 0) {
+          district = parts[divIndex - 1];
+        }
+      } else if (parts.length >= 2) {
+        // Fallback: use second-to-last as district
+        district = parts[parts.length - 2];
+      }
+
+      if (division) {
+        divisionCounts[division] = (divisionCounts[division] || 0) + 1;
+      }
+      if (district) {
+        const key = district;
+        districtCounts[key] = (districtCounts[key] || 0) + 1;
+      }
     });
+
+    // Build division breakdown
+    const divisionBreakdown = Object.entries(divisionCounts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+      }));
+
+    // Top 10 districts overall
+    const topDistricts = Object.entries(districtCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+      }));
 
     return res.status(200).json({
       stats: {
@@ -53,8 +113,10 @@ async function handler(req, res) {
         withProof,
         dailyCounts: Object.entries(dailyCounts)
           .sort(([a], [b]) => a.localeCompare(b))
-          .slice(-30) // Last 30 days
+          .slice(-30)
           .map(([date, count]) => ({ date, count })),
+        divisionBreakdown,
+        topDistricts,
       },
     });
   } catch (err) {

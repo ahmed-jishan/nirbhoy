@@ -8,6 +8,7 @@ import { requireAdminPage } from "../../../lib/session";
 export const getServerSideProps = requireAdminPage;
 
 const TYPE_LABEL = { incident: "অপরাধ / ঘটনা", grievance: "সাধারণ অভিযোগ" };
+const FETCH_TIMEOUT = 15000; // 15 seconds
 
 export default function ReviewComplaint({ admin }) {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function ReviewComplaint({ admin }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [actionType, setActionType] = useState("");
 
   const [publicTitle, setPublicTitle] = useState("");
   const [publicSummary, setPublicSummary] = useState("");
@@ -27,7 +30,11 @@ export default function ReviewComplaint({ admin }) {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/admin/complaints/${id}`)
+    setLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    fetch(`/api/admin/complaints/${id}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
@@ -36,41 +43,98 @@ export default function ReviewComplaint({ admin }) {
         setPublicSummary(d.complaint.publicSummary || "");
         setRejectionReason(d.complaint.rejectionReason || "");
       })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        if (e.name === "AbortError") {
+          setError("সার্ভার থেকে সাড়া পাওয়া যায়নি। আবার চেষ্টা করুন।");
+        } else {
+          setError(e.message);
+        }
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [id]);
 
   async function loadProofs() {
     setProofLoading(true);
+    setError("");
     try {
-      const res = await fetch(`/api/admin/proof-url?id=${id}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+      const res = await fetch(`/api/admin/proof-url?id=${id}`, { signal: controller.signal });
+      clearTimeout(timeout);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setProofUrls(data.urls);
       if (data.urls.length > 0) setSelectedProof(data.urls[0]);
     } catch (e) {
-      setError(e.message);
+      if (e.name === "AbortError") {
+        setError("প্রমাণ লোড করতে সময় বেশি লাগছে। আবার চেষ্টা করুন।");
+      } else {
+        setError(e.message);
+      }
     } finally {
       setProofLoading(false);
     }
   }
 
   async function updateStatus(status) {
+    // Client-side validation
+    if (status === "published") {
+      if (!publicSummary || publicSummary.trim().length < 10) {
+        setError("পাবলিক সারাংশ কমপক্ষে ১০ অক্ষর লিখুন। কোনো নাম বা শনাক্তযোগ্য তথ্য দেবেন না।");
+        return;
+      }
+    }
+
     setSaving(true);
     setError("");
+    setSuccessMsg("");
+    setActionType(status);
+
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
       const res = await fetch(`/api/admin/complaints/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, publicTitle, publicSummary, rejectionReason }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setComplaint(data.complaint);
+
+      // Show success message based on action
+      if (status === "published") {
+        setSuccessMsg("✅ রিপোর্ট সফলভাবে প্রকাশিত হয়েছে!");
+      } else if (status === "reviewing") {
+        setSuccessMsg("✅ স্ট্যাটাস 'যাচাই চলছে' এ আপডেট করা হয়েছে।");
+      } else if (status === "rejected") {
+        setSuccessMsg("✅ রিপোর্ট প্রত্যাখ্যান করা হয়েছে।");
+      }
+
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccessMsg(""), 5000);
     } catch (e) {
-      setError(e.message);
+      if (e.name === "AbortError") {
+        setError("সার্ভার থেকে সাড়া পাওয়া যায়নি। আবার চেষ্টা করুন।");
+      } else {
+        setError(e.message || "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      }
     } finally {
       setSaving(false);
+      setActionType("");
     }
   }
 
@@ -162,13 +226,13 @@ export default function ReviewComplaint({ admin }) {
                           onClick={() => setSelectedProof(p)}
                           className={`relative h-16 w-16 overflow-hidden rounded-md border-2 transition-colors ${
                             selectedProof?.publicId === p.publicId
-                              ? "border-amber"
-                              : "border-border hover:border-amber/60"
+                              ? "border-accent"
+                              : "border-border hover:border-accent/60"
                           }`}
                         >
                           {p.resourceType === "video" ? (
                             <div className="flex h-full w-full items-center justify-center bg-elevated2">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="#E8A33D">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="#7C8BA0">
                                 <polygon points="8,5 19,12 8,19" />
                               </svg>
                             </div>
@@ -213,17 +277,44 @@ export default function ReviewComplaint({ admin }) {
               </div>
             </div>
 
-            {error && <p className="mt-3 font-body text-sm text-danger">{error}</p>}
+            {successMsg && (
+              <div className="mt-3 rounded-md border border-accent/30 bg-accent-soft/40 px-4 py-3">
+                <p className="font-body text-sm text-accent">{successMsg}</p>
+              </div>
+            )}
+            {error && (
+              <div className="mt-3 rounded-md border border-danger/40 bg-danger-soft px-4 py-3">
+                <p className="font-body text-sm text-danger">{error}</p>
+              </div>
+            )}
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button onClick={() => updateStatus("reviewing")} disabled={saving} className="btn-secondary text-xs">
-                যাচাই চলছে চিহ্নিত করুন
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => updateStatus("reviewing")}
+                disabled={saving}
+                className="btn-secondary text-xs relative"
+              >
+                {saving && actionType === "reviewing" ? (
+                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> যাচাই চলছে...</>
+                ) : "যাচাই চলছে চিহ্নিত করুন"}
               </button>
-              <button onClick={() => updateStatus("published")} disabled={saving} className="btn-primary text-xs">
-                প্রকাশ করুন
+              <button
+                onClick={() => updateStatus("published")}
+                disabled={saving}
+                className="btn-primary text-xs relative"
+              >
+                {saving && actionType === "published" ? (
+                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রকাশ হচ্ছে...</>
+                ) : "প্রকাশ করুন"}
               </button>
-              <button onClick={() => updateStatus("rejected")} disabled={saving} className="btn-secondary text-xs !border-danger/40 !text-danger">
-                প্রত্যাখ্যান করুন
+              <button
+                onClick={() => updateStatus("rejected")}
+                disabled={saving}
+                className="btn-secondary text-xs !border-danger/40 !text-danger relative"
+              >
+                {saving && actionType === "rejected" ? (
+                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রত্যাখ্যান হচ্ছে...</>
+                ) : "প্রত্যাখ্যান করুন"}
               </button>
             </div>
           </div>

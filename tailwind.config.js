@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./pages/**/*.{js,jsx}",
-    "./components/**/*.{js,jsx}",
+    "./pages/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
@@ -18,22 +18,22 @@ module.exports = {
           faint: "#505A6B",
         },
         amber: {
-          DEFAULT: "#E8A33D",
-          soft: "#3D3121",
-          dim: "#B87F2A",
-          bright: "#F0B85C",
-          glow: "rgba(185,150,120,0.12)",
+          DEFAULT: "#8892A4",
+          soft: "#1E2530",
+          dim: "#6B7A90",
+          bright: "#A0B0C4",
+          glow: "rgba(136,146,164,0.12)",
         },
         danger: {
           DEFAULT: "#C4634F",
           soft: "#3A2420",
         },
         accent: {
-          DEFAULT: "#C89B5C",
-          soft: "#2D2418",
-          dim: "#A87D42",
-          bright: "#D9AD6E",
-          glow: "rgba(200,155,92,0.10)",
+          DEFAULT: "#7C8BA0",
+          soft: "#1A212E",
+          dim: "#5E6D82",
+          bright: "#94A4B8",
+          glow: "rgba(124,139,160,0.10)",
         },
       },
       fontFamily: {
@@ -44,8 +44,8 @@ module.exports = {
         code: ["'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       backgroundImage: {
-        lantern: "radial-gradient(circle at 78% 18%, rgba(232,163,61,0.12), transparent 45%)",
-        "accent-radial": "radial-gradient(circle at 22% 82%, rgba(200,155,92,0.05), transparent 45%)",
+        lantern: "radial-gradient(circle at 78% 18%, rgba(136,146,164,0.12), transparent 45%)",
+        "accent-radial": "radial-gradient(circle at 22% 82%, rgba(124,139,160,0.05), transparent 45%)",
         "grid-pattern": `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255,255,255,0.02)' stroke-width='1'/%3E%3C/svg%3E")`,
       },
       keyframes: {
@@ -78,8 +78,8 @@ module.exports = {
           "to": { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 8px rgba(200,155,92,0.1)" },
-          "50%": { boxShadow: "0 0 16px rgba(200,155,92,0.2)" },
+          "0%, 100%": { boxShadow: "0 0 8px rgba(124,139,160,0.1)" },
+          "50%": { boxShadow: "0 0 16px rgba(124,139,160,0.2)" },
         },
       },
       animation: {

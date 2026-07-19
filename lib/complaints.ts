@@ -90,6 +90,171 @@ const BANGLADESH_LOCATIONS = {
   "নওগাঁ": { lat: 24.8042, lng: 88.9508 },
 };
 
+// Thana-level coordinates for more precise map display
+const THANA_LOCATIONS = {
+  // Dhaka district thanas
+  "সদর": { lat: 23.7104, lng: 90.4074 },
+  "কোতোয়ালী": { lat: 23.7099, lng: 90.4122 },
+  "যাত্রাবাড়ী": { lat: 23.7085, lng: 90.4300 },
+  "ডেমরা": { lat: 23.7200, lng: 90.4800 },
+  "গুলশান": { lat: 23.7925, lng: 90.4150 },
+  "মিরপুর": { lat: 23.8000, lng: 90.3650 },
+  "উত্তরা": { lat: 23.8750, lng: 90.4000 },
+  "মোহাম্মদপুর": { lat: 23.7600, lng: 90.3600 },
+  "ধানমন্ডি": { lat: 23.7450, lng: 90.3750 },
+  "তেজগাঁও": { lat: 23.7650, lng: 90.3900 },
+  "আদর্শ": { lat: 23.7000, lng: 90.4200 },
+  "কেরানীগঞ্জ": { lat: 23.6800, lng: 90.3600 },
+  "নবাবগঞ্জ": { lat: 23.6500, lng: 90.3200 },
+  "দোহার": { lat: 23.5900, lng: 90.3000 },
+  "সাভার": { lat: 23.8583, lng: 90.2667 },
+  "ধামরাই": { lat: 23.9100, lng: 90.2200 },
+  // Narayanganj
+  "বন্দর": { lat: 23.6100, lng: 90.5200 },
+  "রূপগঞ্জ": { lat: 23.7800, lng: 90.5200 },
+  "সোনারগাঁও": { lat: 23.6500, lng: 90.6000 },
+  "ফতুল্লা": { lat: 23.6400, lng: 90.4800 },
+  "সিদ্ধিরগঞ্জ": { lat: 23.6800, lng: 90.5000 },
+  "আড়াইহাজার": { lat: 23.7900, lng: 90.6500 },
+  // Gazipur
+  "কালিয়াকৈর": { lat: 24.0800, lng: 90.2200 },
+  "কালীগঞ্জ": { lat: 24.1000, lng: 90.1800 },
+  "কাপাসিয়া": { lat: 24.1000, lng: 90.5500 },
+  "শ্রীপুর": { lat: 24.2000, lng: 90.4700 },
+  // Chittagong thanas
+  "পাঁচলাইশ": { lat: 22.3400, lng: 91.8200 },
+  "চন্দনাইশ": { lat: 22.2000, lng: 91.9800 },
+  "বাঁশখালী": { lat: 22.3000, lng: 91.9500 },
+  "পটিয়া": { lat: 22.2900, lng: 91.9800 },
+  "রাঙ্গুনিয়া": { lat: 22.4600, lng: 91.9300 },
+  "হাটহাজারী": { lat: 22.5000, lng: 91.8000 },
+  "ফটিকছড়ি": { lat: 22.6800, lng: 91.7800 },
+  "রাউজান": { lat: 22.5300, lng: 91.9200 },
+  "সাতকানিয়া": { lat: 22.1000, lng: 92.0500 },
+  "বোয়ালখালী": { lat: 22.3700, lng: 91.9200 },
+  "আনোয়ারা": { lat: 22.2100, lng: 91.9000 },
+  "মিরসরাই": { lat: 22.7700, lng: 91.5700 },
+  "লোহাগাড়া": { lat: 22.0000, lng: 92.1000 },
+  "সন্দ্বীপ": { lat: 22.4800, lng: 91.4300 },
+  "সীতাকুণ্ড": { lat: 22.6100, lng: 91.6600 },
+  "কর্ণফুলী": { lat: 22.3200, lng: 91.8000 },
+  // Cox's Bazar
+  "চকরিয়া": { lat: 21.7800, lng: 92.0000 },
+  "টেকনাফ": { lat: 20.8700, lng: 92.3000 },
+  "উখিয়া": { lat: 21.2800, lng: 92.1000 },
+  "কুতুবদিয়া": { lat: 21.8200, lng: 91.8600 },
+  "পেকুয়া": { lat: 21.8200, lng: 92.0000 },
+  "মহেশখালী": { lat: 21.5500, lng: 91.9500 },
+  "রামু": { lat: 21.4500, lng: 92.1000 },
+  // Sylhet
+  "বালাগঞ্জ": { lat: 24.6700, lng: 91.8300 },
+  "বিয়ানীবাজার": { lat: 24.8200, lng: 92.1500 },
+  "বিশ্বনাথ": { lat: 24.8200, lng: 91.7200 },
+  "কানাইঘাট": { lat: 25.0200, lng: 92.2500 },
+  "জকিগঞ্জ": { lat: 24.8700, lng: 92.3700 },
+  "গোলাপগঞ্জ": { lat: 24.8500, lng: 91.7800 },
+  "ফেঞ্চুগঞ্জ": { lat: 24.7000, lng: 91.9400 },
+  "কোম্পানীগঞ্জ": { lat: 25.0800, lng: 91.8000 },
+  "গোয়াইনঘাট": { lat: 25.1000, lng: 91.9000 },
+  "জৈন্তাপুর": { lat: 25.1200, lng: 92.1200 },
+  "ওসমানীনগর": { lat: 24.7300, lng: 91.7500 },
+  "দক্ষিণ সুরমা": { lat: 24.9000, lng: 91.8700 },
+  // Rajshahi
+  "বোয়ালিয়া": { lat: 24.3700, lng: 88.6000 },
+  "মতিহার": { lat: 24.3800, lng: 88.6200 },
+  "শাহমখদুম": { lat: 24.4000, lng: 88.5800 },
+  "চারঘাট": { lat: 24.2800, lng: 88.5000 },
+  "পবা": { lat: 24.4200, lng: 88.5500 },
+  "বাঘা": { lat: 24.2000, lng: 88.8400 },
+  "গোদাগাড়ী": { lat: 24.4600, lng: 88.3300 },
+  "তানোড়": { lat: 24.6000, lng: 88.5800 },
+  "দুর্গাপুর": { lat: 24.4500, lng: 88.7700 },
+  "পুঠিয়া": { lat: 24.3600, lng: 88.8300 },
+  "বাগমারা": { lat: 24.5600, lng: 88.5600 },
+  "মোহনপুর": { lat: 24.5600, lng: 88.6500 },
+  // Khulna
+  "দৌলতপুর": { lat: 22.8800, lng: 89.5200 },
+  "খালিশপুর": { lat: 22.9000, lng: 89.5000 },
+  "সোনাডাঙ্গা": { lat: 22.8100, lng: 89.5600 },
+  "হরিণটানা": { lat: 22.8200, lng: 89.5300 },
+  "পাইকগাছা": { lat: 22.5800, lng: 89.3300 },
+  "বটিয়াঘাটা": { lat: 22.7200, lng: 89.5200 },
+  "ডুমুরিয়া": { lat: 22.8000, lng: 89.4200 },
+  "কয়রা": { lat: 22.3500, lng: 89.3000 },
+  "দাকোপ": { lat: 22.5700, lng: 89.5100 },
+  "তেরখাদা": { lat: 22.9400, lng: 89.6700 },
+  "ফুলতলা": { lat: 22.9700, lng: 89.4700 },
+  "রূপসা": { lat: 22.8300, lng: 89.5800 },
+  "দিঘলিয়া": { lat: 22.9200, lng: 89.5300 },
+  // Barisal
+  "আগৈলঝাড়া": { lat: 22.9600, lng: 90.1400 },
+  "বাকেরগঞ্জ": { lat: 22.5500, lng: 90.3300 },
+  "বানারীপাড়া": { lat: 22.7800, lng: 90.1700 },
+  "গৌরনদী": { lat: 22.9700, lng: 90.2200 },
+  "হিজলা": { lat: 23.0000, lng: 90.5000 },
+  "মেহেন্দিগঞ্জ": { lat: 22.8200, lng: 90.5300 },
+  "মুলাদী": { lat: 22.9100, lng: 90.4000 },
+  "বাবুগঞ্জ": { lat: 22.6800, lng: 90.3200 },
+  "উজিরপুর": { lat: 22.8100, lng: 90.2400 },
+  // Rangpur
+  "পীরগঞ্জ": { lat: 25.8500, lng: 89.3200 },
+  "বদরগঞ্জ": { lat: 25.6700, lng: 89.0500 },
+  "গংগাচড়া": { lat: 25.8500, lng: 89.2200 },
+  "তারাগঞ্জ": { lat: 25.8000, lng: 89.0200 },
+  "কাউনিয়া": { lat: 25.7700, lng: 89.4200 },
+  "মিঠাপুকুর": { lat: 25.5700, lng: 89.2800 },
+  "পীরগাছা": { lat: 25.7000, lng: 89.4000 },
+  // Mymensingh
+  "ঈশ্বরগঞ্জ": { lat: 24.6800, lng: 90.5900 },
+  "গফরগাঁও": { lat: 24.4200, lng: 90.5500 },
+  "গৌরীপুর": { lat: 24.7500, lng: 90.5700 },
+  "ত্রিশাল": { lat: 24.5800, lng: 90.3800 },
+  "ধোবাউড়া": { lat: 25.1000, lng: 90.1200 },
+  "নান্দাইল": { lat: 24.5600, lng: 90.6800 },
+  "ফুলবাড়িয়া": { lat: 24.6300, lng: 90.2700 },
+  "ফুলপুর": { lat: 25.0300, lng: 90.3600 },
+  "ভালুকা": { lat: 24.3700, lng: 90.3800 },
+  "মুক্তাগাছা": { lat: 24.7600, lng: 90.2600 },
+  "হালুয়াঘাট": { lat: 25.1200, lng: 90.3500 },
+};
+
+// Simple in-memory cache for Nominatim geocoding results
+const geocodeCache = new Map();
+
+/**
+ * Geocode a location string using Nominatim (OpenStreetMap free API)
+ * Returns { lat, lng } or null if not found
+ * Rate-limited to 1 request per second (Nominatim TOS)
+ */
+async function geocodeWithNominatim(query) {
+  if (!query || query.trim().length < 5) return null;
+
+  const cacheKey = query.trim().toLowerCase();
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey);
+  }
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=bd`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Nirbhoy/1.0 (complaint geocoding)' },
+    });
+    const data = await res.json();
+    if (data && data.length > 0) {
+      const result = {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+      };
+      geocodeCache.set(cacheKey, result);
+      return result;
+    }
+    geocodeCache.set(cacheKey, null);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function getLocationFromDistrict(districtName) {
   if (!districtName) return null;
   // Try exact match
@@ -111,6 +276,7 @@ export async function createComplaint(input) {
   let location = "";
   let lat = null;
   let lng = null;
+  let locationPrecision = "district";
 
   if (typeof input.location === "object" && input.location !== null) {
     const loc = input.location;
@@ -125,20 +291,51 @@ export async function createComplaint(input) {
     if (loc.postalCode) parts.push(loc.postalCode);
     location = parts.join(", ");
 
-    // Auto-geocode from district for map display
-    const coords = getLocationFromDistrict(loc.district);
-    if (coords) {
-      lat = coords.lat;
-      lng = coords.lng;
+    // Step 1: Try Nominatim for exact street-level geocoding if detail provided
+    if (loc.detail && loc.detail.trim().length > 3) {
+      const nominatimQuery = [loc.detail, loc.thana, loc.district, "Bangladesh"]
+        .filter(Boolean)
+        .join(", ");
+      const exactCoords = await geocodeWithNominatim(nominatimQuery);
+      if (exactCoords) {
+        lat = exactCoords.lat;
+        lng = exactCoords.lng;
+        locationPrecision = "street";
+      }
+    }
+
+    // Step 2: If Nominatim failed or no detail, fall back to thana/district
+    if (lat === null) {
+      if (loc.thana && THANA_LOCATIONS[loc.thana]) {
+        const thanaCoords = THANA_LOCATIONS[loc.thana];
+        lat = thanaCoords.lat;
+        lng = thanaCoords.lng;
+        locationPrecision = "thana";
+      } else {
+        const coords = getLocationFromDistrict(loc.district);
+        if (coords) {
+          lat = coords.lat;
+          lng = coords.lng;
+        }
+      }
     }
   } else if (typeof input.location === "string") {
     location = input.location;
-    // Try to geocode from whatever free-text location was provided
-    for (const [district, coords] of Object.entries(BANGLADESH_LOCATIONS)) {
-      if (location.includes(district)) {
-        lat = coords.lat;
-        lng = coords.lng;
-        break;
+    // Try Nominatim for free-text location
+    const exactCoords = await geocodeWithNominatim(location + ", Bangladesh");
+    if (exactCoords) {
+      lat = exactCoords.lat;
+      lng = exactCoords.lng;
+      locationPrecision = "street";
+    }
+    // Fallback to district matching
+    if (lat === null) {
+      for (const [district, coords] of Object.entries(BANGLADESH_LOCATIONS)) {
+        if (location.includes(district)) {
+          lat = coords.lat;
+          lng = coords.lng;
+          break;
+        }
       }
     }
   }
@@ -151,6 +348,7 @@ export async function createComplaint(input) {
     location,
     lat,
     lng,
+    locationPrecision,
     proofs: input.proofs || [],
     status: "pending",
     publicTitle: null,
@@ -196,6 +394,7 @@ export async function listPublishedComplaints({ type = null, pageSize = 200 } = 
         location: d.location || "",
         lat: d.lat || null,
         lng: d.lng || null,
+        locationPrecision: d.locationPrecision || "district",
         publishedAt: d.publishedAt ? d.publishedAt.toDate().toISOString() : null,
       };
     })

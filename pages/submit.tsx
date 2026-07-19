@@ -8,6 +8,10 @@ import { getTurnstileSiteKey } from "../lib/captcha";
 const MAX_TOTAL_MB = 30;
 const MAX_TOTAL_BYTES = MAX_TOTAL_MB * 1024 * 1024;
 const MAX_FILES = 10;
+const MAX_FILE_SIZE_MB = 15;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/quicktime"];
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov"];
 
 // Complete Bangladesh administrative hierarchy
 const DIVISIONS = ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ"];
@@ -201,6 +205,24 @@ export default function Submit() {
       setError(`সর্বোচ্চ ${MAX_FILES}টি ফাইল আপলোড করা যাবে।`);
       e.target.value = "";
       return;
+    }
+
+    // Validate each file
+    for (const file of selected) {
+      // Check file type
+      const ext = "." + file.name.split(".").pop().toLowerCase();
+      if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
+        setError(`"${file.name}" ফাইলটি সমর্থিত নয়। শুধু ছবি (JPG, PNG, WebP, GIF) ও ভিডিও (MP4, WebM, MOV) অনুমোদিত।`);
+        e.target.value = "";
+        return;
+      }
+
+      // Check individual file size
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setError(`"${file.name}" ফাইলটি ${MAX_FILE_SIZE_MB}MB এর বেশি। প্রতিটি ফাইল সর্বোচ্চ ${MAX_FILE_SIZE_MB}MB হতে পারে।`);
+        e.target.value = "";
+        return;
+      }
     }
 
     const existingSize = files.reduce((sum, f) => sum + f.size, 0);

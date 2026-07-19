@@ -57,13 +57,13 @@ export async function notifyNewComplaint(caseId, title, type) {
     subject: `[Nirbhoy] নতুন রিপোর্ট: ${caseId}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #E8A33D;">নতুন রিপোর্ট জমা হয়েছে</h2>
+        <h2 style="color: #8892A4;">নতুন রিপোর্ট জমা হয়েছে</h2>
         <p style="color: #8A94A6;">একটি নতুন রিপোর্ট মডারেশনের অপেক্ষায় রয়েছে।</p>
         
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr>
             <td style="padding: 8px; color: #5C6577; font-size: 12px;">কেস নম্বর</td>
-            <td style="padding: 8px; color: #E8A33D; font-family: monospace;">${caseId}</td>
+            <td style="padding: 8px; color: #8892A4; font-family: monospace;">${caseId}</td>
           </tr>
           <tr>
             <td style="padding: 8px; color: #5C6577; font-size: 12px;">ধরন</td>
@@ -76,7 +76,7 @@ export async function notifyNewComplaint(caseId, title, type) {
         </table>
         
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/admin" 
-           style="display: inline-block; padding: 12px 24px; background: #E8A33D; color: #0D1117; text-decoration: none; border-radius: 6px; font-weight: 600;">
+           style="display: inline-block; padding: 12px 24px; background: #7C8BA0; color: #0A0E15; text-decoration: none; border-radius: 6px; font-weight: 600;">
           মডারেটর প্যানেলে যান
         </a>
       </div>

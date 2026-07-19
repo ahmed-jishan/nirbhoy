@@ -49,7 +49,7 @@ export default function AdminDashboard({ admin }) {
               onClick={() => setStatus(t.key)}
               className={`rounded-full border px-4 py-1.5 font-body text-xs transition-colors ${
                 status === t.key
-                  ? "border-amber/60 bg-amber-soft text-amber"
+                  ? "border-accent/60 bg-accent-soft text-accent"
                   : "border-borderStrong text-text-muted hover:text-text-primary"
               }`}
             >
@@ -85,7 +85,7 @@ export default function AdminDashboard({ admin }) {
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-border last:border-0 hover:bg-elevated/60">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-amber hover:underline">
+                          <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-accent hover:underline">
                         {item.caseId}
                       </Link>
                     </td>
@@ -120,7 +120,7 @@ export default function AdminDashboard({ admin }) {
                 className="block rounded-lg border border-border bg-elevated/60 p-4 hover:bg-elevated transition-colors"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs text-amber">{item.caseId}</span>
+                  <span className="font-mono text-xs text-accent">{item.caseId}</span>
                   <StatusBadge status={item.status} />
                 </div>
                 <p className="font-body text-sm text-text-primary font-medium truncate">{item.title}</p>

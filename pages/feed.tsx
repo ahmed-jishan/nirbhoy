@@ -12,10 +12,12 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState("list");
+  const [activeCaseId, setActiveCaseId] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     setError("");
+    setActiveCaseId(null);
     fetch(`/api/complaints?type=${filter}`)
       .then((r) => r.json())
       .then((d) => {
@@ -35,7 +37,7 @@ export default function Feed() {
 
       <section className="mx-auto max-w-5xl px-6 py-14">
         <div className="flex items-center gap-3">
-          <span className="font-terminal text-sm text-accent">$</span>
+          <span className="font-terminal text-sm text-text-muted">$</span>
           <h1 className="font-display text-3xl font-semibold text-text-primary">জনসাধারণের ফিড</h1>
         </div>
         <p className="mt-3 max-w-lg font-code text-sm leading-relaxed text-text-muted">
@@ -86,7 +88,42 @@ export default function Feed() {
         {viewMode === "map" && (
           <div className="mt-6">
             {mapItems.length > 0 ? (
-              <MapView items={mapItems} />
+              <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+                <MapView
+                  items={mapItems}
+                  activeCaseId={activeCaseId}
+                  onCaseSelect={setActiveCaseId}
+                />
+                {/* Mini case list for map interaction */}
+                <div className="max-h-[450px] overflow-y-auto space-y-2 rounded-md border border-border bg-elevated/60 p-3">
+                  <p className="font-terminal text-xs text-text-faint mb-2">
+                    $ লোকেশন সহ রিপোর্ট ({mapItems.length}টি)
+                  </p>
+                  {mapItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveCaseId(item.caseId)}
+                      className={`w-full text-left rounded-md border p-3 transition-colors ${
+                        activeCaseId === item.caseId
+                          ? "border-accent/60 bg-accent-soft/40"
+                          : "border-border bg-elevated hover:border-accent/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-terminal text-xs text-accent">{item.caseId}</span>
+                        <span className="font-terminal text-[10px] text-text-faint">
+                          {item.locationPrecision === "street" ? "রাস্তা" :
+                           item.locationPrecision === "thana" ? "থানা" : "জেলা"}
+                        </span>
+                      </div>
+                      <p className="mt-1 font-code text-xs text-text-primary truncate">{item.title}</p>
+                      <p className="mt-0.5 font-terminal text-[10px] text-text-faint truncate">
+                        {item.location ? item.location.split(",").slice(0, 2).join(", ") : ""}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : (
               <div className="card text-center">
                 <p className="font-code text-sm text-text-muted">
@@ -101,9 +138,9 @@ export default function Feed() {
           <div className="mt-8 space-y-4">
             {loading && (
               <div className="card text-center">
-                <p className="font-terminal text-sm text-accent animate-pulse">
-                  $ loading...
-                </p>
+                  <p className="font-terminal text-sm text-text-muted animate-pulse">
+                    $ loading...
+                  </p>
               </div>
             )}
             {error && (
@@ -121,7 +158,7 @@ export default function Feed() {
             {items.map((item, idx) => (
               <article key={item.id} className="card" style={{ animationDelay: `${idx * 0.05}s` }}>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-terminal text-xs tracking-widest text-accent">
+                  <span className="font-terminal text-xs tracking-widest text-text-primary">
                     {item.caseId}
                   </span>
                   <span className="badge-published">

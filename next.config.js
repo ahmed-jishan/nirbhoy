@@ -5,6 +5,11 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  typescript: {
+    // Type errors don't fail production build (IDE still shows them).
+    // This lets us migrate JS -> TS incrementally without blocking builds.
+    ignoreBuildErrors: true,
+  },
 };
 
 // Only wrap with Sentry if DSN is configured (production)

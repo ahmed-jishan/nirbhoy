@@ -49,7 +49,7 @@ export default function AdminPublished({ admin }) {
             <Link
               key={item.id}
               href={`/admin/review/${item.id}`}
-              className="card flex items-center justify-between !p-4 hover:border-amber/40"
+              className="card flex items-center justify-between !p-4 hover:border-accent/40"
             >
               <div>
                 <span className="font-mono text-xs text-text-faint">{item.caseId}</span>
