@@ -48,6 +48,9 @@ async function main() {
   try {
     userRecord = await admin.auth().getUserByEmail(email);
     console.log(`Firebase Auth user already exists for ${email} (uid: ${userRecord.uid}).`);
+    // Update password to match .env.local in case it was changed
+    await admin.auth().updateUser(userRecord.uid, { password });
+    console.log(`Password updated for ${email}.`);
   } catch (err) {
     if (err.code === "auth/user-not-found") {
       userRecord = await admin.auth().createUser({ email, password });

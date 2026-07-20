@@ -428,6 +428,20 @@ export async function getComplaintStatusByCaseId(caseId) {
   };
 }
 
+/**
+ * Round coordinates to ~500m grid (~0.0045 degrees at Bangladesh's latitude).
+ * This prevents exact reporter location identification while keeping the
+ * crime-area visualisation meaningful. Exact coords remain available in
+ * the admin panel for law enforcement.
+ */
+function roundToGrid(lat, lng, precision = 0.0045) {
+  if (lat == null || lng == null) return { lat: null, lng: null };
+  return {
+    lat: Math.round(lat / precision) * precision,
+    lng: Math.round(lng / precision) * precision,
+  };
+}
+
 export async function listPublishedComplaints({ type = null, pageSize = 200 } = {}) {
   const db = adminDb();
   try {
@@ -438,6 +452,7 @@ export async function listPublishedComplaints({ type = null, pageSize = 200 } = 
     const snap = await q.get();
     const items = snap.docs.map((doc) => {
       const d = doc.data();
+      const rounded = roundToGrid(d.lat, d.lng);
       return {
         id: doc.id,
         caseId: d.caseId,
@@ -445,8 +460,8 @@ export async function listPublishedComplaints({ type = null, pageSize = 200 } = 
         title: d.publicTitle || d.title,
         summary: d.publicSummary || "",
         location: d.location || "",
-        lat: d.lat || null,
-        lng: d.lng || null,
+        lat: rounded.lat,
+        lng: rounded.lng,
         locationPrecision: d.locationPrecision || "district",
         publishedAt: d.publishedAt ? d.publishedAt.toDate().toISOString() : null,
       };

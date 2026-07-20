@@ -1,4 +1,5 @@
 import { Html, Head, Main, NextScript } from "next/document";
+import crypto from "crypto";
 
 /**
  * Custom Document.
@@ -7,7 +8,43 @@ import { Html, Head, Main, NextScript } from "next/document";
  * `next/font/google` in `pages/_app.tsx`, which self-hosts the font files
  * at build time. This prevents leaking any visitor's IP to Google.
  */
+
+/** Generate a CSP nonce for this request — one per page render. */
+function generateNonce() {
+  return crypto.randomBytes(16).toString("base64");
+}
+
 export default function Document() {
+  const nonce = generateNonce();
+  const isDev = process.env.NODE_ENV === "development";
+  const csp = isDev
+    ? [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https://res.cloudinary.com",
+        "media-src 'self' blob: https://res.cloudinary.com",
+        "connect-src 'self' https://api.cloudinary.com ws:",
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+      ].join("; ")
+    : [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com`,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https://res.cloudinary.com",
+        "media-src 'self' blob: https://res.cloudinary.com",
+        "connect-src 'self' https://api.cloudinary.com",
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+      ].join("; ");
+
   return (
     <Html lang="bn">
       <Head>
@@ -15,6 +52,7 @@ export default function Document() {
           name="description"
           content="Nirbhoy — নিরাপদে, নাম প্রকাশ ছাড়াই আপনার এলাকার সমস্যা তুলে ধরুন।"
         />
+        <meta httpEquiv="Content-Security-Policy" content={csp} />
         <link rel="icon" href="/favicon.svg" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0D9488" />
@@ -27,7 +65,7 @@ export default function Document() {
       </Head>
       <body>
         <Main />
-        <NextScript />
+        <NextScript nonce={nonce} />
       </body>
     </Html>
   );

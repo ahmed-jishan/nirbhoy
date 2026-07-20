@@ -1,11 +1,12 @@
 import { adminAuth, adminDb } from "../../../lib/firebaseAdmin";
 import { createSessionCookie, sessionCookieHeader, clearSessionCookieHeader } from "../../../lib/session";
+import { hasTotpEnabled, verifyTotpCode } from "../../../lib/totp";
 import { logger } from "../../../lib/logger";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
-      const { idToken } = req.body || {};
+      const { idToken, totpCode } = req.body || {};
       if (!idToken) {
         return res.status(400).json({ error: "Missing ID token." });
       }
@@ -18,6 +19,18 @@ export default async function handler(req, res) {
       const allow = await adminDb().collection("admins").doc(decoded.uid).get();
       if (!allow.exists) {
         return res.status(403).json({ error: "This account is not authorized as an admin." });
+      }
+
+      // If 2FA is enabled, require a valid TOTP code.
+      const totpActive = await hasTotpEnabled(decoded.uid);
+      if (totpActive) {
+        if (!totpCode || typeof totpCode !== "string") {
+          return res.status(400).json({ error: "totp_required", message: "Two-factor authentication code is required." });
+        }
+        const valid = await verifyTotpCode(decoded.uid, totpCode.trim());
+        if (!valid) {
+          return res.status(401).json({ error: "Invalid two-factor authentication code." });
+        }
       }
 
       const sessionCookie = await createSessionCookie(idToken);
