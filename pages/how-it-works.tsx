@@ -44,7 +44,7 @@ export default function HowItWorks() {
         <ol className="mt-12 space-y-8">
           {STEPS.map((s) => (
             <li key={s.n} className="flex gap-5">
-              <span className="font-mono text-sm text-amber">{s.n}</span>
+              <span className="font-mono text-sm text-accent">{s.n}</span>
               <div>
                 <h3 className="font-display text-lg font-medium text-text-primary">{s.title}</h3>
                 <p className="mt-1.5 font-body text-sm leading-relaxed text-text-muted">{s.body}</p>

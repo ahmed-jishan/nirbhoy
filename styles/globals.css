@@ -2,31 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS Custom Properties ─────────────────────────────────────────────── */
+:root {
+  --color-accent: 13 148 136;       /* #0D9488 — teal-600 */
+  --color-danger: 220 38 38;        /* #DC2626 — red-600 */
+  --color-accent-alpha: 0.20;
+  --z-scanline: 9999;
+}
+
+/* ── Base Layer ────────────────────────────────────────────────────────── */
 @layer base {
   html {
-    scroll-behavior: smooth;
+    @apply scroll-smooth;
   }
+
   body {
     @apply bg-bg text-text-primary font-body antialiased;
-    background-image:
-      radial-gradient(circle at 78% 8%, rgba(136, 146, 164, 0.08), transparent 40%),
-      radial-gradient(circle at 22% 92%, rgba(124, 139, 160, 0.04), transparent 40%),
-      url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255,255,255,0.015)' stroke-width='1'/%3E%3C/svg%3E");
+    @apply bg-body-bg;
     background-attachment: fixed;
   }
+
   h1, h2, h3, h4 {
     @apply font-display;
   }
+
   ::selection {
-    background: rgba(124, 139, 160, 0.25);
+    background: rgba(var(--color-accent), var(--color-accent-alpha));
     color: #fff;
   }
+
   :focus-visible {
-    outline: 2px solid #7C8BA0;
+    outline: 2px solid rgb(var(--color-accent));
     outline-offset: 2px;
   }
+
+  /* Scan line overlay */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--z-scanline);
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+  }
+
+  /* Page transition — fade in on route change */
+  #__next {
+    animation: pageEnter 0.3s ease-out;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    * {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -35,32 +69,28 @@
   }
 }
 
-/* Scan line overlay */
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
+/* ── Keyframes (outside @layer — not needed inside) ───────────────────── */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+/* ── Components Layer ──────────────────────────────────────────────────── */
 @layer components {
+  /* ── Case / Stamp ──────────────────────────────────────────────────── */
   .case-stamp {
     @apply inline-flex items-center gap-2 rounded-none border border-accent/30 bg-accent-soft/60 px-3 py-1.5 font-terminal text-xs tracking-wider text-accent;
   }
 
+  /* ── Buttons ───────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 font-body text-sm font-semibold text-bg transition-all duration-200 hover:bg-accent-dim hover:shadow-[0_0_16px_rgba(124,139,160,0.2)] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 font-body text-sm font-semibold text-bg transition-all duration-200 hover:bg-accent-dim hover:shadow-[0_0_16px_rgba(13,148,136,0.2)] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
@@ -71,38 +101,42 @@ body::after {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 font-body text-sm text-text-muted transition-colors hover:text-text-primary;
   }
 
+  /* ── Card ──────────────────────────────────────────────────────────── */
   .card {
-    @apply rounded-md border border-border bg-elevated/80 p-6 transition-all duration-200;
-  }
-  .card:hover {
-    border-color: rgba(124, 139, 160, 0.12);
+    @apply rounded-md border border-border bg-elevated/80 p-6 transition-all duration-200 hover:border-accent/10;
   }
 
+  /* ── Form fields ───────────────────────────────────────────────────── */
   .field-label {
     @apply mb-2 block font-body text-sm font-medium text-text-primary;
   }
 
   .field-input {
-    @apply w-full rounded-md border border-borderStrong bg-bg/80 px-4 py-3 font-code text-sm text-text-primary placeholder:text-text-faint focus:border-accent/50 focus:outline-none focus:shadow-[0_0_8px_rgba(124,139,160,0.06)] transition-all duration-200;
+    @apply w-full rounded-md border border-borderStrong bg-bg/80 px-4 py-3 font-code text-sm text-text-primary placeholder:text-text-faint focus:border-accent/50 focus:outline-none focus:shadow-[0_0_8px_rgba(13,148,136,0.06)] transition-all duration-200;
   }
 
   .field-hint {
     @apply mt-1.5 font-terminal text-xs text-text-muted;
   }
 
+  /* ── Badges ────────────────────────────────────────────────────────── */
   .badge-pending {
     @apply rounded-none border border-borderStrong bg-elevated2 px-2.5 py-1 font-terminal text-xs uppercase tracking-wider text-text-muted;
   }
+
   .badge-reviewing {
     @apply rounded-none border border-accent/40 bg-accent-soft/60 px-2.5 py-1 font-terminal text-xs uppercase tracking-wider text-accent;
   }
+
   .badge-published {
     @apply rounded-none border border-accent/40 bg-accent-soft/40 px-2.5 py-1 font-terminal text-xs uppercase tracking-wider text-accent;
   }
+
   .badge-rejected {
     @apply rounded-none border border-danger/40 bg-danger-soft/60 px-2.5 py-1 font-terminal text-xs uppercase tracking-wider text-danger;
   }
 
+  /* ── Redacted text ─────────────────────────────────────────────────── */
   .redacted {
     @apply relative inline-block overflow-hidden;
   }
@@ -111,16 +145,18 @@ body::after {
     @apply absolute inset-0 bg-elevated2 rounded;
   }
 
+  /* ── Terminal cursor blink ─────────────────────────────────────────── */
   .cursor-blink::after {
     content: "▌";
     @apply text-accent animate-blink ml-1;
   }
 
+  /* ── Terminal output tokens ────────────────────────────────────────── */
   .term-ok {
     @apply text-accent font-terminal;
   }
   .term-warn {
-    @apply text-accent font-terminal;
+    @apply text-accent-dim font-terminal;
   }
   .term-err {
     @apply text-danger font-terminal;
@@ -129,11 +165,13 @@ body::after {
     @apply text-text-muted font-terminal;
   }
 
+  /* ── Hex label ─────────────────────────────────────────────────────── */
   .hex-label {
     @apply font-terminal text-xs tracking-widest text-text-faint;
   }
 
+  /* ── Glitch hover effect ───────────────────────────────────────────── */
   .glitch-hover:hover {
-    animation: glitch 0.3s infinite, glitch-skew 0.3s infinite;
+    animation: glitch 0.3s infinite;
   }
 }

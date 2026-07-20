@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
@@ -57,6 +58,7 @@ export default function Feed() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [districtFilter, setDistrictFilter] = useState<string>("all");
   const [precisionFilter, setPrecisionFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -102,9 +104,10 @@ export default function Feed() {
     return Array.from(found).sort();
   }, [items]);
 
-  // Filter items by district + precision, then sort so exact pins bubble up.
+  // Filter items by district + precision + search, then sort so exact pins bubble up.
   const filteredItems = useMemo(() => {
     const known = new Set(districtOptions);
+    const q = searchQuery.toLowerCase().trim();
     return items
       .filter((it) => {
         if (districtFilter !== "all") {
@@ -114,6 +117,15 @@ export default function Feed() {
         if (precisionFilter !== "all") {
           const p = it.locationPrecision || "district";
           if (p !== precisionFilter) return false;
+        }
+        if (q) {
+          const title = (it.title || "").toLowerCase();
+          const summary = (it.summary || "").toLowerCase();
+          const location = (it.location || "").toLowerCase();
+          const caseId = (it.caseId || "").toLowerCase();
+          if (!title.includes(q) && !summary.includes(q) && !location.includes(q) && !caseId.includes(q)) {
+            return false;
+          }
         }
         return true;
       })
@@ -143,8 +155,33 @@ export default function Feed() {
           এখানে শুধু যাচাইকৃত ও মডারেট করা সারাংশ দেখানো হয় — কোনো ব্যক্তির নাম কখনোই দেখানো হয় না।
         </p>
 
+        {/* Search */}
+        <div className="mt-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-terminal text-xs text-text-faint pointer-events-none">$</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="শিরোনাম, কেস নম্বর, বা লোকেশন অনুসারে খুঁজুন..."
+              className="w-full rounded-md border border-borderStrong bg-bg/80 pl-8 pr-4 py-2.5 font-code text-sm text-text-primary placeholder:text-text-faint focus:border-accent/50 focus:outline-none focus:shadow-[0_0_8px_rgba(13,148,136,0.06)] transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Filters + view toggle */}
-        <div className="mt-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2 items-center">
             {/* Type filter */}
             <div className="flex gap-1">
@@ -353,15 +390,27 @@ export default function Feed() {
                     </span>
                   </div>
                 </div>
-                <h3 className="mt-3 font-display text-lg font-medium text-text-primary">{item.title}</h3>
-                {item.summary && (
-                  <p className="mt-2 font-code text-sm leading-relaxed text-text-muted">{item.summary}</p>
-                )}
+                <Link href={`/case/${item.caseId}`} className="block group">
+                  <h3 className="mt-3 font-display text-lg font-medium text-text-primary group-hover:text-accent transition-colors">
+                    {item.title}
+                  </h3>
+                  {item.summary && (
+                    <p className="mt-2 font-code text-sm leading-relaxed text-text-muted">{item.summary}</p>
+                  )}
+                </Link>
                 <div className="mt-4 flex items-center justify-between font-terminal text-xs text-text-faint">
                   <span>{'>'} {item.location || "স্থান উল্লেখ নেই"}</span>
                   <span>
                     {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("bn-BD") : ""}
                   </span>
+                </div>
+                <div className="mt-3 flex items-center justify-end">
+                  <Link
+                    href={`/case/${item.caseId}`}
+                    className="font-terminal text-[11px] text-accent hover:underline"
+                  >
+                    টাইমলাইন দেখুন →
+                  </Link>
                 </div>
               </article>
             ))}

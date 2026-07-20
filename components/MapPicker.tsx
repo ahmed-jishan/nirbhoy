@@ -45,16 +45,16 @@ function createPickerIcon() {
   const size = 46;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + 12}" viewBox="0 0 ${size} ${size + 12}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="none" stroke="#E07B65" stroke-width="1" opacity="0.35">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="none" stroke="#EF4444" stroke-width="1" opacity="0.35">
         <animate attributeName="r" from="${size / 2 - 4}" to="${size / 2 + 8}" dur="1.8s" repeatCount="indefinite"/>
         <animate attributeName="opacity" from="0.5" to="0" dur="1.8s" repeatCount="indefinite"/>
       </circle>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 4}" fill="#C4634F" stroke="#8A3B2A" stroke-width="2"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 4}" fill="#DC2626" stroke="#991B1B" stroke-width="2"/>
       <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 8}" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-      <line x1="${size / 2}" y1="${size / 2 - 8}" x2="${size / 2}" y2="${size / 2 + 8}" stroke="#0A0E15" stroke-width="1.5"/>
-      <line x1="${size / 2 - 8}" y1="${size / 2}" x2="${size / 2 + 8}" y2="${size / 2}" stroke="#0A0E15" stroke-width="1.5"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="2" fill="#0A0E15"/>
-      <path d="M${size / 2 - 5} ${size - 4} L${size / 2} ${size + 10} L${size / 2 + 5} ${size - 4} Z" fill="#C4634F" stroke="#8A3B2A" stroke-width="1"/>
+      <line x1="${size / 2}" y1="${size / 2 - 8}" x2="${size / 2}" y2="${size / 2 + 8}" stroke="#0B1121" stroke-width="1.5"/>
+      <line x1="${size / 2 - 8}" y1="${size / 2}" x2="${size / 2 + 8}" y2="${size / 2}" stroke="#0B1121" stroke-width="1.5"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="2" fill="#0B1121"/>
+      <path d="M${size / 2 - 5} ${size - 4} L${size / 2} ${size + 10} L${size / 2 + 5} ${size - 4} Z" fill="#DC2626" stroke="#991B1B" stroke-width="1"/>
     </svg>`;
   return {
     iconUrl: `data:image/svg+xml,${encodeURIComponent(svg)}`,
@@ -275,7 +275,7 @@ export default function MapPicker({
           <animate attributeName='r' from='${dotSize / 2}' to='${dotSize / 2 + 12}' dur='1.8s' repeatCount='indefinite'/>
           <animate attributeName='opacity' from='0.4' to='0' dur='1.8s' repeatCount='indefinite'/>
         </circle>
-        <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 4}' fill='#0A0E15' stroke='#5CB4FF' stroke-width='2'/>
+        <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 4}' fill='#0B1121' stroke='#5CB4FF' stroke-width='2'/>
         <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 8}' fill='#5CB4FF'/>
       </svg>`;
     const userIcon = L.icon({
@@ -452,7 +452,7 @@ export default function MapPicker({
         <div
           ref={mapContainer}
           className="w-full h-full"
-          style={{ background: "#0A0E15" }}
+          style={{ background: "#0B1121" }}
         />
 
         {!loaded && (
@@ -525,7 +525,7 @@ export default function MapPicker({
             <div className="rounded-md border border-border bg-elevated/95 px-3 py-1.5 text-[10px] font-terminal text-text-muted backdrop-blur-sm shadow-lg">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[#C4634F]" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#DC2626]" />
                   ঘটনাস্থল
                 </span>
                 <span className="flex items-center gap-1.5">

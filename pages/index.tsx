@@ -2,40 +2,48 @@ import Head from "next/head";
 import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
+import { useI18n } from "../lib/i18n";
 
 export default function Home() {
+  const { t, lang } = useI18n();
   return (
     <>
       <Head>
-        <title>Nirbhoy — নাম প্রকাশ ছাড়াই আপনার এলাকার কথা বলুন</title>
+        <title>
+          {lang === "bn"
+            ? "Nirbhoy — নাম প্রকাশ ছাড়াই আপনার এলাকার কথা বলুন"
+            : "Nirbhoy — Speak up about your neighborhood, anonymously"}
+        </title>
       </Head>
 
       <SiteHeader />
 
-      <section className="relative overflow-hidden bg-lantern bg-accent">
-        <div className="mx-auto grid max-w-5xl gap-12 px-6 py-20 md:grid-cols-[1.2fr,1fr] md:py-28">
+      <section className="relative overflow-hidden bg-gradient-to-b from-elevated/50 to-bg">
+        {/* Subtle decorative gradient accents */}
+        <div className="pointer-events-none absolute -top-40 right-0 h-[500px] w-[500px] opacity-[0.03] rounded-full bg-accent blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 left-0 h-[400px] w-[400px] opacity-[0.02] rounded-full bg-accent blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-5xl gap-12 px-6 py-20 md:grid-cols-[1.2fr,1fr] md:py-28">
           <div className="animate-fade-in-up">
             <span className="case-stamp">
-              <span className="term-ok">[ OK ]</span> NRB-2026-00147 · উদাহরণ
+              <span className="term-ok">[ OK ]</span> NRB-2026-00147 · {lang === "bn" ? "উদাহরণ" : "example"}
             </span>
             <h1 className="mt-6 font-display text-4xl font-semibold leading-[1.15] text-text-primary md:text-5xl">
-              যা দেখেছেন, বলুন<span className="text-accent">_</span><br /> নাম প্রকাশ ছাড়াই।
+              {t("home.title.line1")}<span className="text-accent">_</span><br /> {t("home.title.line2")}
             </h1>
             <p className="mt-6 max-w-md font-code text-base leading-relaxed text-text-muted">
-              <span className="text-accent">{'>'}</span> গ্রামে বা এলাকায় কিছু ভুল ঘটতে দেখলে, প্রমাণ থাকলেও প্রায়ই সরাসরি বলার সাহস হয় না।
-              Nirbhoy-এ আপনি সম্পূর্ণ পরিচয়গোপনে রিপোর্ট জমা দিতে পারবেন — কোনো নাম, ফোন নম্বর
-              বা লোকেশন সংরক্ষণ করা হয় না।
+              <span className="text-accent">{'>'}</span> {t("home.subtitle")}
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/submit" className="btn-primary animate-pulse-glow">
-                একটি রিপোর্ট জমা দিন
+              <Link href="/submit" className="btn-primary">
+                {t("home.cta.submit")}
               </Link>
               <Link href="/feed" className="btn-secondary">
-                [ ফিড দেখুন ]
+                {t("home.cta.feed")}
               </Link>
             </div>
             <p className="mt-6 font-terminal text-xs text-text-faint">
-              <span className="term-info">$</span> প্রতিটি রিপোর্ট একটি কেস নম্বর পায় — যাতে নাম ছাড়াই আপনি পরে অবস্থা যাচাই করতে পারেন।
+              <span className="term-info">$</span> {t("home.tagline.note")}
             </p>
           </div>
 
@@ -46,7 +54,7 @@ export default function Home() {
                 <span className="font-terminal text-[10px] text-text-faint">PID: 0x7f4e</span>
               </div>
               <div className="mt-4 space-y-2 font-code text-xs text-text-muted">
-                <p><span className="text-accent">{'>'}</span> title: <span className="text-text-primary">&ldquo;গ্রামের রাস্তা সংস্কার&rdquo;</span></p>
+                <p><span className="text-accent">{'>'}</span> title: <span className="text-text-primary">&ldquo;{lang === "bn" ? "গ্রামের রাস্তা সংস্কার" : "Village road repair"}&rdquo;</span></p>
                 <p><span className="text-accent">{'>'}</span> type: <span className="text-text-primary">grievance</span></p>
                 <p><span className="text-accent">{'>'}</span> location: <span className="text-text-primary">[REDACTED]</span></p>
                 <p><span className="text-accent">{'>'}</span> identity: <span className="text-accent">anonymous</span></p>
@@ -55,8 +63,8 @@ export default function Home() {
                 <p className="text-accent">✓ report submitted successfully</p>
               </div>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                <span className="badge-reviewing">যাচাই চলছে</span>
-                <span className="font-terminal text-xs text-accent">পরিচয় গোপন</span>
+                <span className="badge-reviewing">{t("home.demo.title")}</span>
+                <span className="font-terminal text-xs text-accent">{t("home.demo.identity")}</span>
               </div>
             </div>
           </div>
@@ -65,20 +73,20 @@ export default function Home() {
 
       <section className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="font-display text-2xl font-semibold text-text-primary">
-          <span className="text-accent">#</span> এটি কীভাবে নিরাপদ রাখে
+          <span className="text-accent">#</span> {t("home.trust.title")}
         </h2>
         <div className="mt-8 grid gap-6 md:grid-cols-3">
           <TrustCard
-            title="সরাসরি প্রকাশ হয় না"
-            body="আপনার রিপোর্ট আগে একজন যাচাইকারী দেখেন। কোনো ব্যক্তির নাম কখনোই পাবলিক ফিডে প্রকাশ করা হয় না — শুধু ঘটনার সারাংশ।"
+            title={t("home.trust.card1.title")}
+            body={t("home.trust.card1.body")}
           />
           <TrustCard
-            title="কোনো পরিচয় সংরক্ষণ হয় না"
-            body="আমরা আপনার নাম, ফোন নম্বর, বা নির্ভুল লোকেশন সংগ্রহ করি না। শুধু একটি কেস নম্বর দেওয়া হয়।"
+            title={t("home.trust.card2.title")}
+            body={t("home.trust.card2.body")}
           />
           <TrustCard
-            title="প্রমাণ সুরক্ষিত থাকে"
-            body="ছবি বা ভিডিও প্রমাণ এনক্রিপ্টেড ও প্রাইভেট থাকে — শুধু অনুমোদিত মডারেটর যাচাইয়ের জন্য দেখতে পারেন।"
+            title={t("home.trust.card3.title")}
+            body={t("home.trust.card3.body")}
           />
         </div>
       </section>

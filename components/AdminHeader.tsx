@@ -2,8 +2,19 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { LanternMark } from "./SiteHeader";
 
+const ADMIN_NAV = [
+  { href: "/admin", label: "অপেক্ষমাণ", exact: true },
+  { href: "/admin/published", label: "প্রকাশিত" },
+  { href: "/admin/stats", label: "পরিসংখ্যান" },
+];
+
 export default function AdminHeader({ email }) {
   const router = useRouter();
+
+  function isActive(href, exact) {
+    if (exact) return router.pathname === href;
+    return router.pathname.startsWith(href);
+  }
 
   async function handleLogout() {
     await fetch("/api/admin/session", { method: "DELETE" });
@@ -20,9 +31,19 @@ export default function AdminHeader({ email }) {
             <span className="font-terminal text-xs text-accent">/ প্যানেল</span>
           </Link>
           <nav className="flex items-center gap-1 font-mono text-xs">
-            <Link href="/admin" className="btn-ghost">{'>'} অপেক্ষমাণ</Link>
-            <Link href="/admin/published" className="btn-ghost">{'>'} প্রকাশিত</Link>
-            <Link href="/admin/stats" className="btn-ghost">{'>'} পরিসংখ্যান</Link>
+            {ADMIN_NAV.map(({ href, label, exact }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`relative px-3 py-2 transition-all duration-200 ${
+                  isActive(href, exact)
+                    ? "text-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2px] after:bg-accent after:rounded-full after:shadow-[0_0_6px_rgba(13,148,136,0.5)]"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                {'>'} {label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-4">

@@ -53,15 +53,15 @@ const PRECISION_LABEL_BN = {
 function getMarkerColors(type, isActive) {
   if (type === "incident") {
     return {
-      bg: isActive ? "#E07B65" : "#C4634F",
-      border: isActive ? "#F09585" : "#8A3B2A",
-      text: "#0A0E15",
+      bg: isActive ? "#EF4444" : "#DC2626",
+      border: isActive ? "#FCA5A5" : "#991B1B",
+      text: "#0B1121",
     };
   }
   return {
-    bg: isActive ? "#94A4B8" : "#7C8BA0",
-    border: isActive ? "#B6C4D6" : "#5E6D82",
-    text: "#0A0E15",
+    bg: isActive ? "#14B8A6" : "#0D9488",
+    border: isActive ? "#5EEAD4" : "#0F766E",
+    text: "#0B1121",
   };
 }
 
@@ -239,7 +239,7 @@ export default function MapView({
 
       // Uncertainty circle — helps viewers understand precision
       const radius = PRECISION_RADIUS_M[precision] || PRECISION_RADIUS_M.district;
-      const circleColor = item.type === "incident" ? "#C4634F" : "#7C8BA0";
+      const circleColor = item.type === "incident" ? "#DC2626" : "#0D9488";
       const circle = L.circle([item.lat, item.lng], {
         radius,
         color: circleColor,
@@ -260,7 +260,7 @@ export default function MapView({
 
       // Popup content
       const typeBn = item.type === "incident" ? "অপরাধ / ঘটনা" : "সাধারণ অভিযোগ";
-      const typeColor = item.type === "incident" ? "#E07B65" : "#94A4B8";
+      const typeColor = item.type === "incident" ? "#EF4444" : "#14B8A6";
       const publishedAt = item.publishedAt
         ? new Date(item.publishedAt).toLocaleDateString("bn-BD", {
             year: "numeric",
@@ -270,21 +270,21 @@ export default function MapView({
         : "";
       marker.bindPopup(
         `
-        <div style="font-family:'Space Grotesk',system-ui,sans-serif;min-width:250px;max-width:280px;background:#0A0E15;color:#E1E4E8;border:1px solid rgba(136,146,164,0.25);">
-          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 12px;background:rgba(124,139,160,0.06);">
+        <div style="font-family:'Space Grotesk',system-ui,sans-serif;min-width:250px;max-width:280px;background:#0B1121;color:#F1F5F9;border:1px solid rgba(13,148,136,0.25);">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 12px;background:rgba(13,148,136,0.06);">
             <span style="font-family:'VT323',monospace;font-size:13px;color:${typeColor};letter-spacing:0.5px;">${item.caseId || ""}</span>
-            <span style="font-family:'VT323',monospace;font-size:10px;color:#7D8899;">📍 ${precisionLabelBn(precision)}</span>
+            <span style="font-family:'VT323',monospace;font-size:10px;color:#94A3B8;">📍 ${precisionLabelBn(precision)}</span>
           </div>
           <div style="padding:12px;">
-            <div style="display:inline-block;padding:2px 6px;margin-bottom:8px;font-family:'VT323',monospace;font-size:10px;color:${typeColor};background:rgba(124,139,160,0.1);border:1px solid rgba(124,139,160,0.3);">${typeBn}</div>
-            <p style="font-size:14px;font-weight:600;margin:0 0 6px;color:#E1E4E8;line-height:1.35;">${item.title || ""}</p>
-            ${item.summary ? `<p style="font-size:12px;color:#7D8899;margin:0 0 8px;border-left:2px solid ${typeColor};padding-left:8px;line-height:1.5;">${item.summary.substring(0, 140)}${item.summary.length > 140 ? "…" : ""}</p>` : ""}
-            <div style="font-family:'VT323',monospace;font-size:11px;color:#7D8899;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:8px;">
+            <div style="display:inline-block;padding:2px 6px;margin-bottom:8px;font-family:'VT323',monospace;font-size:10px;color:${typeColor};background:rgba(13,148,136,0.1);border:1px solid rgba(13,148,136,0.3);">${typeBn}</div>
+            <p style="font-size:14px;font-weight:600;margin:0 0 6px;color:#F1F5F9;line-height:1.35;">${item.title || ""}</p>
+            ${item.summary ? `<p style="font-size:12px;color:#94A3B8;margin:0 0 8px;border-left:2px solid ${typeColor};padding-left:8px;line-height:1.5;">${item.summary.substring(0, 140)}${item.summary.length > 140 ? "…" : ""}</p>` : ""}
+            <div style="font-family:'VT323',monospace;font-size:11px;color:#94A3B8;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:8px;">
               <div style="display:flex;justify-content:space-between;gap:8px;">
-                <span style="color:#94A4B8;">${item.location ? item.location.split(",").slice(0, 2).join(", ") : "স্থান উল্লেখ নেই"}</span>
+                <span style="color:#14B8A6;">${item.location ? item.location.split(",").slice(0, 2).join(", ") : "স্থান উল্লেখ নেই"}</span>
                 ${publishedAt ? `<span>${publishedAt}</span>` : ""}
               </div>
-              <div style="margin-top:4px;font-size:10px;color:#505A6B;">
+              <div style="margin-top:4px;font-size:10px;color:#64748B;">
                 LAT ${item.lat.toFixed(4)} · LNG ${item.lng.toFixed(4)}
               </div>
             </div>
@@ -415,7 +415,7 @@ export default function MapView({
           <animate attributeName='r' from='${dotSize / 2}' to='${dotSize / 2 + 12}' dur='1.8s' repeatCount='indefinite'/>
           <animate attributeName='opacity' from='0.4' to='0' dur='1.8s' repeatCount='indefinite'/>
         </circle>
-        <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 4}' fill='#0A0E15' stroke='#5CB4FF' stroke-width='2'/>
+        <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 4}' fill='#0B1121' stroke='#5CB4FF' stroke-width='2'/>
         <circle cx='${(dotSize + 30) / 2}' cy='${(dotSize + 30) / 2}' r='${dotSize / 2 - 8}' fill='#5CB4FF'/>
       </svg>`;
     const userIcon = L.icon({
@@ -437,7 +437,7 @@ export default function MapView({
     userMarkerRef.current.bindPopup(
       `<div style="font-family:'Space Grotesk',sans-serif;padding:6px 4px;">
         <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#5CB4FF;">📍 আপনি এখানে আছেন</p>
-        <p style="margin:0;font-family:'VT323',monospace;font-size:11px;color:#7D8899;">
+        <p style="margin:0;font-family:'VT323',monospace;font-size:11px;color:#94A3B8;">
           LAT ${latitude.toFixed(5)}<br/>LNG ${longitude.toFixed(5)}
           ${accuracy ? `<br/>নির্ভুলতা ≈ ${Math.round(accuracy)}m` : ""}
         </p>
@@ -531,7 +531,7 @@ export default function MapView({
       <div
         ref={mapContainer}
         className="w-full"
-        style={{ background: "#0A0E15", height: isFullscreen ? "100vh" : `${height}px` }}
+        style={{ background: "#0B1121", height: isFullscreen ? "100vh" : `${height}px` }}
       />
 
       {!loaded && (
@@ -624,11 +624,11 @@ export default function MapView({
           <div className="rounded-md border border-border bg-elevated/95 px-3 py-2 text-[10px] font-terminal text-text-muted backdrop-blur-sm shadow-lg max-w-[220px]">
             <p className="text-text-primary mb-1.5 tracking-wider">$ legend</p>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#C4634F]" />
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#DC2626]" />
               <span>অপরাধ / ঘটনা</span>
             </div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#7C8BA0]" />
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#0D9488]" />
               <span>সাধারণ অভিযোগ</span>
             </div>
             <div className="flex items-center gap-2 mb-2">

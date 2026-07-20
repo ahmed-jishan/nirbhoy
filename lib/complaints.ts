@@ -1,27 +1,54 @@
 import { adminDb } from "./firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "./logger";
+import crypto from "crypto";
 
 const COMPLAINTS = "complaints";
-const COUNTERS = "counters";
 
 export const STATUSES = ["pending", "reviewing", "published", "rejected"];
 export const DEFAULT_PAGE_SIZE = 50;
 
-// Atomically increments a per-year counter and returns a case ID like
-// NRB-2026-00001. A transaction avoids two simultaneous submitters getting
-// the same number.
+/**
+ * Generates a random, unguessable case ID.
+ *
+ * Old scheme: `NRB-2026-00001` — sequential, enumerable. An attacker who
+ * scraped the site could iterate from 00001 upward and pull every case.
+ * New scheme: `NRB-2026-XXXXXXX` where XXXXXXX is 7 chars from a
+ * confusion-safe alphabet (no 0/O/1/I/L). Search space is
+ * 32^7 ≈ 34 billion — impossible to enumerate over the network.
+ *
+ * We check Firestore for a collision and retry (extremely unlikely at
+ * this size but cheap insurance).
+ */
+const CASE_ID_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // 31 chars
+const CASE_ID_LENGTH = 7;
+
+function randomSlug(): string {
+  const bytes = crypto.randomBytes(CASE_ID_LENGTH);
+  let out = "";
+  for (let i = 0; i < CASE_ID_LENGTH; i++) {
+    out += CASE_ID_ALPHABET[bytes[i] % CASE_ID_ALPHABET.length];
+  }
+  return out;
+}
+
 async function generateCaseId() {
   const db = adminDb();
   const year = new Date().getFullYear();
-  const counterRef = db.collection(COUNTERS).doc(`complaints_${year}`);
 
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(counterRef);
-    const next = (snap.exists ? snap.data().count : 0) + 1;
-    tx.set(counterRef, { count: next }, { merge: true });
-    return `NRB-${year}-${String(next).padStart(5, "0")}`;
-  });
+  // Try up to 5 times to avoid a collision. The alphabet is large enough
+  // that a second attempt is virtually never needed.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = `NRB-${year}-${randomSlug()}`;
+    const existing = await db
+      .collection(COMPLAINTS)
+      .where("caseId", "==", candidate)
+      .limit(1)
+      .get();
+    if (existing.empty) return candidate;
+    logger.warn({ attempt }, "case-id collision — retrying");
+  }
+  throw new Error("Could not generate a unique case ID — please retry.");
 }
 
 // Map of districts to approximate lat/lng for crime mapping

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import AdminHeader from "../../../components/AdminHeader";
 import StatusBadge from "../../../components/StatusBadge";
+import AdminUpdatePanel from "../../../components/AdminUpdatePanel";
 import { requireAdminPage } from "../../../lib/session";
 import { googleMapsLink, osmMapsLink } from "../../../lib/mapLinks";
 
@@ -52,16 +53,28 @@ export default function ReviewComplaint({ admin }) {
   const [selectedProof, setSelectedProof] = useState(null);
   // 3D modal toggle — the modal handles its own MapLibre lifecycle.
   const [show3D, setShow3D] = useState(false);
+  // Track the latest request to ignore stale responses from React 18 StrictMode
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (!id) return;
+
+    const thisRequest = ++requestIdRef.current;
+
     setLoading(true);
+    setError("");
+    setComplaint(null);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
     fetch(`/api/admin/complaints/${id}`, { signal: controller.signal })
-      .then((r) => r.json())
+      .then((r) => {
+        if (requestIdRef.current !== thisRequest) return null; // stale request
+        return r.json();
+      })
       .then((d) => {
+        if (requestIdRef.current !== thisRequest || !d) return; // stale
         if (d.error) throw new Error(d.error);
         setComplaint(d.complaint);
         setPublicTitle(d.complaint.publicTitle || d.complaint.title);
@@ -69,6 +82,7 @@ export default function ReviewComplaint({ admin }) {
         setRejectionReason(d.complaint.rejectionReason || "");
       })
       .catch((e) => {
+        if (requestIdRef.current !== thisRequest) return; // stale — ignore
         if (e.name === "AbortError") {
           setError("সার্ভার থেকে সাড়া পাওয়া যায়নি। আবার চেষ্টা করুন।");
         } else {
@@ -76,6 +90,7 @@ export default function ReviewComplaint({ admin }) {
         }
       })
       .finally(() => {
+        if (requestIdRef.current !== thisRequest) return; // stale — ignore
         clearTimeout(timeout);
         setLoading(false);
       });
@@ -429,6 +444,16 @@ export default function ReviewComplaint({ admin }) {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Update / Timeline panel — always available so moderators can
+            track internal progress. Public updates only show up on the
+            public case page after the report has been published. */}
+        <div className="mt-8">
+          <AdminUpdatePanel
+            complaintId={complaint.id}
+            publishedAt={complaint.publishedAt}
+          />
         </div>
       </section>
 

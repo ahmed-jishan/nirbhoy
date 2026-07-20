@@ -1,0 +1,20 @@
+{
+  "name": "Nirbhoy — Anonymous Complaint Platform",
+  "short_name": "Nirbhoy",
+  "description": "নাম প্রকাশ ছাড়াই আপনার এলাকার কথা বলুন — Anonymous civic complaint & whistleblower platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1121",
+  "theme_color": "#0D9488",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "utilities"],
+  "lang": "bn-BD"
+}

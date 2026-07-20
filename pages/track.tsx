@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import StatusBadge from "../components/StatusBadge";
@@ -64,6 +65,14 @@ export default function Track() {
               <p className="mt-3 font-mono text-xs text-text-faint">
                 সর্বশেষ আপডেট: {new Date(result.updatedAt).toLocaleString("bn-BD")}
               </p>
+            )}
+            {result.status === "published" && (
+              <Link
+                href={`/case/${result.caseId}`}
+                className="btn-primary mt-4 !inline-flex text-xs"
+              >
+                টাইমলাইন ও বিস্তারিত দেখুন →
+              </Link>
             )}
           </div>
         )}

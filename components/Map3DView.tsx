@@ -129,8 +129,8 @@ export default function Map3DView({
           })
             .setLngLat([lng, lat])
             .setHTML(
-              `<div style="font-family:'Space Grotesk',system-ui;padding:6px 10px;background:#0A0E15;color:#E1E4E8;border:1px solid rgba(136,146,164,0.3);">
-                ${caseId ? `<div style="font-family:'VT323',monospace;font-size:12px;color:#94A4B8;">${caseId}</div>` : ""}
+              `<div style="font-family:'Space Grotesk',system-ui;padding:6px 10px;background:#0B1121;color:#F1F5F9;border:1px solid rgba(13,148,136,0.3);">
+                ${caseId ? `<div style="font-family:'VT323',monospace;font-size:12px;color:#14B8A6;">${caseId}</div>` : ""}
                 ${title ? `<div style="font-size:13px;font-weight:600;margin-top:2px;">${escapeHtml(title)}</div>` : ""}
               </div>`
             )
@@ -208,7 +208,7 @@ export default function Map3DView({
       className={`rounded-md overflow-hidden border border-border relative bg-elevated ${className}`}
       style={{ height }}
     >
-      <div ref={container} className="w-full h-full" style={{ background: "#0A0E15" }} />
+      <div ref={container} className="w-full h-full" style={{ background: "#0B1121" }} />
 
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-elevated pointer-events-none">
@@ -335,8 +335,8 @@ function ensure3DBuildings(map: any) {
 function markerSvg(type: string, caseId?: string) {
   const num = caseId ? String(caseId).split("-").pop() : "?";
   const isIncident = type === "incident";
-  const bg = isIncident ? "#C4634F" : "#7C8BA0";
-  const border = isIncident ? "#8A3B2A" : "#5E6D82";
+  const bg = isIncident ? "#DC2626" : "#0D9488";
+  const border = isIncident ? "#991B1B" : "#0F766E";
   const size = 48;
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + 10}" viewBox="0 0 ${size} ${size + 10}">
@@ -346,7 +346,7 @@ function markerSvg(type: string, caseId?: string) {
       </circle>
       <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="${bg}" stroke="${border}" stroke-width="2"/>
       <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 6}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-      <text x="${size / 2}" y="${size / 2 + 4}" text-anchor="middle" fill="#0A0E15" font-family="'VT323',monospace" font-size="14" font-weight="bold">${num}</text>
+      <text x="${size / 2}" y="${size / 2 + 4}" text-anchor="middle" fill="#0B1121" font-family="'VT323',monospace" font-size="14" font-weight="bold">${num}</text>
       <path d="M${size / 2 - 5} ${size - 4} L${size / 2} ${size + 8} L${size / 2 + 5} ${size - 4} Z" fill="${bg}" stroke="${border}" stroke-width="1"/>
     </svg>`;
 }
