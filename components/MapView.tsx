@@ -125,6 +125,7 @@ export default function MapView({
   const flyTimeoutRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentLayer, setCurrentLayer] = useState("dark");
+  const [tileErrors, setTileErrors] = useState(false);
   const layerRefs = useRef({});
 
   // Load map
@@ -151,20 +152,27 @@ export default function MapView({
           zoomControl: true,
           attributionControl: true,
           maxZoom: 20,
-          zoomSnap: 0.5,
+          zoomSnap: 1,
           wheelPxPerZoomLevel: 120,
           preferCanvas: true,
         });
 
-        // Build tile layers
+        // Build tile layers with error tracking
         const layers: any = {};
+        let anyTileFailed = false;
         Object.entries(TILE_LAYERS).forEach(([key, cfg]) => {
-          layers[key] = L.tileLayer(cfg.url, {
-
+          const layer = L.tileLayer(cfg.url, {
             attribution: cfg.attribution,
             maxZoom: cfg.maxZoom,
             subdomains: key === "satellite" ? "" : "abc",
           });
+          // Track tile load errors — if any layer fails we show a hint
+          layer.on("tileerror", () => {
+            anyTileFailed = true;
+            setTileErrors(true);
+            console.warn(`[MapView] Tile layer "${key}" failed to load — possible CSP or network issue`);
+          });
+          layers[key] = layer;
         });
         layerRefs.current = layers;
         layers.dark.addTo(map);

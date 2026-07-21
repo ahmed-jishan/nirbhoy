@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import Script from "next/script";
 import { Space_Grotesk, VT323, JetBrains_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { ToastProvider } from "../components/Toast";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { I18nProvider } from "../lib/i18n";
+import { ThemeProvider } from "../lib/theme";
+import PwaInstallPrompt from "../components/PwaInstallPrompt";
 
 /**
  * Self-hosted Google Fonts.
@@ -40,27 +43,46 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export default function App({ Component, pageProps }) {
+  // Register service worker for PWA support
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      // Only register in production (HTTPS) or localhost
+      if (typeof window !== "undefined" && (
+        window.location.protocol === "https:" ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      )) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {
+          // SW registration failed silently — app works without it
+        });
+      }
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
-      <I18nProvider>
-        <ToastProvider>
-          <div
-            className={`${spaceGrotesk.variable} ${vt323.variable} ${jetbrainsMono.variable}`}
-            style={{ display: "contents" }}
-          >
-            {/* Cloudflare Turnstile CAPTCHA widget */}
-            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-              <Script
-                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-                async
-                defer
-                strategy="afterInteractive"
-              />
-            )}
-            <Component {...pageProps} />
-          </div>
-        </ToastProvider>
-      </I18nProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <ToastProvider>
+            <div
+              className={`${spaceGrotesk.variable} ${vt323.variable} ${jetbrainsMono.variable}`}
+              style={{ display: "contents" }}
+            >
+              {/* Cloudflare Turnstile CAPTCHA widget */}
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                <Script
+                  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                  async
+                  defer
+                  strategy="afterInteractive"
+                />
+              )}
+              <Component {...pageProps} />
+              <PwaInstallPrompt />
+            </div>
+          </ToastProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

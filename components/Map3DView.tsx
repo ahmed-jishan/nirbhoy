@@ -68,6 +68,7 @@ export default function Map3DView({
   // dynamically imported by the parent (ssr: false).
   useEffect(() => {
     let cancelled = false;
+    let loadTimeout: ReturnType<typeof setTimeout> | null = null;
     const setup = async () => {
       try {
         const maplibregl: any = (await import("maplibre-gl")).default;
@@ -95,22 +96,56 @@ export default function Map3DView({
           "top-left"
         );
 
-        // Once the style is fully loaded, ensure 3D buildings are visible
-        // on styles that support them. Liberty already contains a
-        // 3d-building layer, but if a downstream style omits it we inject
-        // a minimal extrusion layer as a fallback.
-        map.on("load", () => {
+        // Mark map as loaded once the style is ready. We listen to both
+        // "load" and "styledata" to cover edge cases where the first load
+        // event might be missed (e.g. if the map finishes initializing
+        // before we add the listener).
+        function markLoaded() {
+          if (cancelled || loaded) return;
           try {
             ensure3DBuildings(map);
           } catch {
             /* ignore fallback failures */
           }
-          if (!cancelled) setLoaded(true);
+          setLoaded(true);
+          if (loadTimeout) clearTimeout(loadTimeout);
+        }
+
+        // "load" fires once the style + all initial sources are loaded.
+        map.on("load", markLoaded);
+        // "styledata" fires whenever style data changes — use as fallback
+        // in case "load" was already dispatched before listener attached.
+        map.on("styledata", (e: any) => {
+          // Only trigger once on initial style load
+          if (e?.sourceId) return; // source-level changes → skip
+          if (!map.isStyleLoaded()) return;
+          markLoaded();
         });
 
-        // Add a striking pin at the reported location. We render a custom
-        // HTML element so the marker matches the terminal aesthetic used
-        // elsewhere in Nirbhoy.
+        // Handle style/network errors — if loading the style fails, show an
+        // error instead of hanging on "initializing..." forever.
+        map.on("error", (e: any) => {
+          if (!e?.error || cancelled) return;
+          const msg = String(e.error.message || e.error).toLowerCase();
+          // Suppress "not found" on missing glyph ranges — they're normal
+          // and MapLibre recovers gracefully.
+          if (msg.includes("not found") && e?.sourceId) return;
+          console.warn("[Map3DView] Map error:", e.error);
+          if (!cancelled && !loaded) {
+            setError("৩ডি মানচিত্র লোড করতে সমস্যা হয়েছে। অন্য স্টাইল ট্রাই করুন।");
+          }
+        });
+
+        // Safety timeout — if the map style hasn't loaded after 15 seconds,
+        // show a fallback error allowing the user to try other styles.
+        loadTimeout = setTimeout(() => {
+          if (cancelled || loaded) return;
+          console.warn("[Map3DView] Style load timeout — trying fallback style");
+          // Switch to "bright" style as it's simpler and more likely to load
+          setCurrentStyle("bright");
+        }, 12000);
+
+        // Add a striking pin at the reported location.
         const el = document.createElement("div");
         el.className = "nirbhoy-3d-marker";
         el.innerHTML = markerSvg(type, caseId);
@@ -151,6 +186,7 @@ export default function Map3DView({
     setup();
     return () => {
       cancelled = true;
+      if (loadTimeout) clearTimeout(loadTimeout);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -177,6 +213,9 @@ export default function Map3DView({
         /* noop */
       }
       mapRef.current.jumpTo(camera);
+      // Mark loaded when a style switch completes (handles fallback
+      // when Liberty fails and we auto-switch to Bright).
+      setLoaded(true);
     });
   }, [currentStyle]);
 

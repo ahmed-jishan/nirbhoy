@@ -7,26 +7,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "#162033",
-        elevated: "#1C2A3D",
-        elevated2: "#243348",
-        border: "rgba(255,255,255,0.06)",
-        borderStrong: "rgba(255,255,255,0.12)",
+        bg: "rgb(var(--color-bg-rgb) / <alpha-value>)",
+        elevated: "rgb(var(--color-elevated-rgb) / <alpha-value>)",
+        elevated2: "rgb(var(--color-elevated2-rgb) / <alpha-value>)",
+        border: "rgb(var(--color-border-rgb) / <alpha-value>)",
+        borderStrong: "rgb(var(--color-border-strong-rgb) / <alpha-value>)",
         text: {
-          primary: "#F1F5F9",
-          muted: "#94A3B8",
-          faint: "#64748B",
+          primary: "rgb(var(--color-text-primary-rgb) / <alpha-value>)",
+          muted: "rgb(var(--color-text-muted-rgb) / <alpha-value>)",
+          faint: "rgb(var(--color-text-faint-rgb) / <alpha-value>)",
         },
         danger: {
-          DEFAULT: "#DC2626",
-          soft: "#3B1414",
+          DEFAULT: "rgb(var(--color-danger-rgb) / <alpha-value>)",
+          soft: "rgb(var(--color-danger-soft-rgb) / <alpha-value>)",
         },
         accent: {
-          DEFAULT: "#0D9488",
-          soft: "#0F2F2D",
-          dim: "#0F766E",
-          bright: "#14B8A6",
-          glow: "rgba(13,148,136,0.10)",
+          DEFAULT: "rgb(var(--color-accent-rgb) / <alpha-value>)",
+          soft: "rgb(var(--color-accent-soft-rgb) / <alpha-value>)",
+          dim: "rgb(var(--color-accent-dim-rgb) / <alpha-value>)",
+          bright: "rgb(var(--color-accent-bright-rgb) / <alpha-value>)",
+          glow: "rgb(var(--color-accent-glow-rgb) / <alpha-value>)",
         },
       },
       fontFamily: {
@@ -39,13 +39,10 @@ module.exports = {
         code: ["var(--font-jetbrains-mono)", "'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       backgroundImage: {
-        lantern: "radial-gradient(circle at 78% 18%, rgba(13,148,136,0.08), transparent 45%)",
-        "accent-radial": "radial-gradient(circle at 22% 82%, rgba(13,148,136,0.04), transparent 45%)",
-        "grid-pattern": `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255,255,255,0.02)' stroke-width='1'/%3E%3C/svg%3E")`,
-        "body-bg":
-          "radial-gradient(circle at 78% 8%, rgba(13,148,136,0.04), transparent 50%)," +
-          "radial-gradient(circle at 22% 92%, rgba(13,148,136,0.02), transparent 50%)," +
-          'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M 40 0 L 0 0 0 40\' fill=\'none\' stroke=\'rgba(255,255,255,0.01)\' stroke-width=\'1\'/%3E%3C/svg%3E")',
+        lantern: "var(--bg-lantern)",
+        "accent-radial": "var(--bg-accent-radial)",
+        "grid-pattern": "var(--bg-grid-pattern)",
+        "body-bg": "var(--bg-body)",
       },
       keyframes: {
         blink: {

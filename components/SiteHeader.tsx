@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useI18n, LanguageToggle } from "../lib/i18n";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV_KEYS = [
   { href: "/feed", key: "nav.feed" },
@@ -54,7 +55,8 @@ export default function SiteHeader() {
           <Link href="/submit" className="btn-secondary ml-2 !px-4 !py-2">
             {t("nav.submit")}
           </Link>
-          <LanguageToggle className="ml-2" />
+          <ThemeToggle className="ml-1" />
+          <LanguageToggle className="ml-1" />
         </nav>
 
         <button
@@ -103,7 +105,10 @@ export default function SiteHeader() {
               <span className="font-terminal text-[10px] uppercase tracking-widest text-text-faint">
                 {t("nav.language")}
               </span>
-              <LanguageToggle />
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <LanguageToggle />
+              </div>
             </div>
           </nav>
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
+import { SkeletonFeed } from "../components/Skeleton";
 
 // Leaflet touches `window`, so render the map view only on the client.
 const MapView = dynamic(() => import("../components/MapView"), {
@@ -264,7 +265,11 @@ export default function Feed() {
 
         {viewMode === "map" && (
           <div className="mt-6">
-            {mapItems.length > 0 ? (
+            {loading ? (
+              <div className="rounded-md border border-border bg-elevated/60 h-[520px] flex items-center justify-center">
+                <p className="font-terminal text-sm text-text-muted animate-pulse">$ loading map...</p>
+              </div>
+            ) : mapItems.length > 0 ? (
               <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
                 <MapView
                   items={mapItems}
@@ -354,11 +359,7 @@ export default function Feed() {
 
         {viewMode === "list" && (
           <div className="mt-8 space-y-4">
-            {loading && (
-              <div className="card text-center">
-                <p className="font-terminal text-sm text-text-muted animate-pulse">$ loading...</p>
-              </div>
-            )}
+            {loading && <SkeletonFeed count={5} />}
             {error && (
               <p className="rounded-none border border-danger/40 bg-danger-soft px-4 py-3 font-code text-sm text-danger">
                 <span className="term-err">[!]</span> {error}
@@ -442,4 +443,3 @@ export default function Feed() {
     </>
   );
 }
-

@@ -2,12 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Custom Properties ─────────────────────────────────────────────── */
-:root {
-  --color-accent: 13 148 136;       /* #0D9488 — teal-600 */
-  --color-danger: 220 38 38;        /* #DC2626 — red-600 */
-  --color-accent-alpha: 0.20;
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME SYSTEM — CSS Custom Properties
+   ═══════════════════════════════════════════════════════════════════════════
+   data-theme="dark"  →  default dark mode (terminal/fabric aesthetic)
+   data-theme="light" →  clean light mode for readability
+   No attribute       →  falls back to dark (default)
+
+   These variables are consumed by Tailwind via tailwind.config.js colors.
+   All values are space-separated RGB triplets for Tailwind's <alpha-value>
+   opacity modifier support (e.g. bg-accent/30).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dark theme (default) ─────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --color-bg-rgb: 11 20 35;
+  --color-elevated-rgb: 21 35 59;
+  --color-elevated2-rgb: 30 47 74;
+  --color-border-rgb: 255 255 255;
+  --color-border-strong-rgb: 255 255 255;
+  --color-text-primary-rgb: 241 245 249;
+  --color-text-muted-rgb: 148 163 184;
+  --color-text-faint-rgb: 100 116 139;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-soft-rgb: 59 20 20;
+  --color-accent-rgb: 13 148 136;
+  --color-accent-soft-rgb: 15 47 45;
+  --color-accent-dim-rgb: 15 118 110;
+  --color-accent-bright-rgb: 20 184 166;
+  --color-accent-glow-rgb: 13 148 136;
+
+  --color-border: var(--color-border-rgb);
+  --color-border-strong: var(--color-border-strong-rgb);
+
+  --bg-lantern: radial-gradient(circle at 78% 18%, rgba(13, 148, 136, 0.08), transparent 45%);
+  --bg-accent-radial: radial-gradient(circle at 22% 82%, rgba(13, 148, 136, 0.04), transparent 45%);
+  --bg-grid-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255,255,255,0.02)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-body: radial-gradient(circle at 78% 8%, rgba(13, 148, 136, 0.04), transparent 50%),
+             radial-gradient(circle at 22% 92%, rgba(13, 148, 136, 0.02), transparent 50%),
+             url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(255,255,255,0.01)' stroke-width='1'/%3E%3C/svg%3E");
+
+  /* Legacy static values used in JS / inline styles / direct CSS */
+  --color-accent-rgb-legacy: 13 148 136;
+  --color-danger-rgb-legacy: 220 38 38;
+  --color-accent-alpha: 0.15;
+  --border-opacity: 0.06;
+  --border-strong-opacity: 0.12;
   --z-scanline: 9999;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-bg-rgb: 248 249 252;
+  --color-elevated-rgb: 255 255 255;
+  --color-elevated2-rgb: 241 243 246;
+  --color-border-rgb: 0 0 0;
+  --color-border-strong-rgb: 0 0 0;
+  --color-text-primary-rgb: 15 23 42;
+  --color-text-muted-rgb: 71 85 105;
+  --color-text-faint-rgb: 148 163 184;
+  --color-danger-rgb: 220 38 38;
+  --color-danger-soft-rgb: 254 226 226;
+  --color-accent-rgb: 13 148 136;
+  --color-accent-soft-rgb: 238 249 248;
+  --color-accent-dim-rgb: 15 118 110;
+  --color-accent-bright-rgb: 20 184 166;
+  --color-accent-glow-rgb: 13 148 136;
+
+  --color-border: var(--color-border-rgb);
+  --color-border-strong: var(--color-border-strong-rgb);
+
+  --bg-lantern: radial-gradient(circle at 78% 18%, rgba(13, 148, 136, 0.04), transparent 45%);
+  --bg-accent-radial: radial-gradient(circle at 22% 82%, rgba(13, 148, 136, 0.03), transparent 45%);
+  --bg-grid-pattern: url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='rgba(0,0,0,0.03)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-body: radial-gradient(circle at 78% 8%, rgba(13, 148, 136, 0.03), transparent 50%),
+             radial-gradient(circle at 22% 92%, rgba(13, 148, 136, 0.02), transparent 50%);
+
+  /* Legacy static values used in JS / inline styles / direct CSS */
+  --color-accent-rgb-legacy: 13 148 136;
+  --color-danger-rgb-legacy: 220 38 38;
+  --color-accent-alpha: 0.12;
+  --border-opacity: 0.06;
+  --border-strong-opacity: 0.12;
+  --z-scanline: 9999;
+}
+
+/* ── Border opacity workaround for direct CSS use ─────────────────────── */
+[data-theme="light"] {
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-strong-light: rgba(0, 0, 0, 0.12);
+}
+:root, [data-theme="dark"] {
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-strong-light: rgba(255, 255, 255, 0.12);
 }
 
 /* ── Base Layer ────────────────────────────────────────────────────────── */
@@ -27,16 +115,16 @@
   }
 
   ::selection {
-    background: rgba(var(--color-accent), var(--color-accent-alpha));
+    background: rgba(var(--color-accent-rgb-legacy), var(--color-accent-alpha));
     color: #fff;
   }
 
   :focus-visible {
-    outline: 2px solid rgb(var(--color-accent));
+    outline: 2px solid rgb(var(--color-accent-rgb-legacy));
     outline-offset: 2px;
   }
 
-  /* Scan line overlay */
+  /* Scan line overlay — subtle in dark, off in light */
   body::after {
     content: "";
     position: fixed;
@@ -50,6 +138,9 @@
       rgba(0, 0, 0, 0.03) 2px,
       rgba(0, 0, 0, 0.03) 4px
     );
+  }
+  [data-theme="light"] body::after {
+    display: none;
   }
 
   /* Page transition — fade in on route change */
@@ -67,6 +158,19 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* ── Theme transition (smooth switch) ─────────────────────────────────── */
+html {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+html * {
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+/* Exclude elements that shouldn't transition (animations, transforms) */
+html *::before,
+html *::after {
+  transition: none;
 }
 
 /* ── Keyframes (outside @layer — not needed inside) ───────────────────── */
@@ -92,6 +196,9 @@
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 font-body text-sm font-semibold text-bg transition-all duration-200 hover:bg-accent-dim hover:shadow-[0_0_16px_rgba(13,148,136,0.2)] disabled:opacity-50 disabled:cursor-not-allowed;
   }
+  [data-theme="light"] .btn-primary {
+    color: #FFFFFF;
+  }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-borderStrong bg-elevated/80 px-5 py-3 font-body text-sm font-semibold text-text-primary transition-all duration-200 hover:border-accent/30 hover:bg-accent-soft/40 hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed;
@@ -104,6 +211,9 @@
   /* ── Card ──────────────────────────────────────────────────────────── */
   .card {
     @apply rounded-md border border-border bg-elevated/80 p-6 transition-all duration-200 hover:border-accent/10;
+  }
+  [data-theme="light"] .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
   /* ── Form fields ───────────────────────────────────────────────────── */
@@ -173,5 +283,37 @@
   /* ── Glitch hover effect ───────────────────────────────────────────── */
   .glitch-hover:hover {
     animation: glitch 0.3s infinite;
+  }
+
+  /* ── Skeleton loading ──────────────────────────────────────────────── */
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-elevated2;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.04),
+      transparent
+    );
+    animation: skeleton-shimmer 1.5s infinite;
+  }
+  [data-theme="light"] .skeleton::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.6),
+      transparent
+    );
+  }
+
+  @keyframes skeleton-shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
 }

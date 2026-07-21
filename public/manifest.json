@@ -1,20 +1,102 @@
 {
-  "name": "Nirbhoy — Anonymous Complaint Platform",
+  "name": "Nirbhoy — নাম প্রকাশ ছাড়াই আপনার এলাকার কথা বলুন",
   "short_name": "Nirbhoy",
-  "description": "নাম প্রকাশ ছাড়াই আপনার এলাকার কথা বলুন — Anonymous civic complaint & whistleblower platform",
+  "description": "নাম প্রকাশ ছাড়াই আপনার এলাকার সমস্যা ও অভিযোগ জানান। Nirbhoy একটি匿名 সিভিক কমপ্লেইন্ট ও হুইসেলব্লোয়ার প্ল্যাটফর্ম।",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B1121",
+  "background_color": "#0B1423",
   "theme_color": "#0D9488",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  },
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Nirbhoy homepage showing anonymous report submission"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Nirbhoy on mobile — report feed view"
+    }
+  ],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["social", "utilities"],
-  "lang": "bn-BD"
+  "shortcuts": [
+    {
+      "name": "রিপোর্ট জমা দিন",
+      "short_name": "রিপোর্ট",
+      "description": "নতুন অভিযোগ বা ঘটনা রিপোর্ট করুন",
+      "url": "/submit",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "জনসাধারণের ফিড",
+      "short_name": "ফিড",
+      "description": "সকল প্রকাশিত রিপোর্ট দেখুন",
+      "url": "/feed",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "পরিসংখ্যান",
+      "short_name": "পরিসংখ্যান",
+      "description": "প্ল্যাটফর্মের সার্বিক পরিসংখ্যান",
+      "url": "/stats",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "categories": ["social", "utilities", "news"],
+  "lang": "bn-BD",
+  "dir": "ltr",
+  "prefer_related_applications": false
 }

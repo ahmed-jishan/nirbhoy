@@ -7,6 +7,7 @@ import SiteFooter from "../../components/SiteFooter";
 import CaseTimeline from "../../components/CaseTimeline";
 import UpvoteButton from "../../components/UpvoteButton";
 import { useI18n } from "../../lib/i18n";
+import { SkeletonCaseDetail } from "../../components/Skeleton";
 
 interface CaseDetail {
   id: string;
@@ -108,11 +109,7 @@ export default function CasePage() {
       <SiteHeader />
 
       <section className="mx-auto max-w-3xl px-6 py-14">
-        {loading && (
-          <div className="card text-center">
-            <p className="font-terminal text-sm text-text-muted animate-pulse">$ {t("common.loading")}</p>
-          </div>
-        )}
+        {loading && <SkeletonCaseDetail />}
 
         {error && !loading && (
           <div className="card text-center">
