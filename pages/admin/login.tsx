@@ -5,7 +5,35 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { getClientAuth } from "../../lib/firebaseClient";
 import { LanternMark } from "../../components/SiteHeader";
 
+// Map Firebase Auth (and server) errors to clear Bengali messages. Distinct
+// codes get distinct messages so failures are diagnosable instead of always
+// showing the same generic "email or password is wrong" text.
+function mapAuthError(err) {
+  const code = err?.code || "";
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/invalid-email":
+      return "ইমেইল বা পাসওয়ার্ড সঠিক নয়।";
+    case "auth/user-disabled":
+      return "এই অ্যাকাউন্টটি নিষ্ক্রিয় করা হয়েছে।";
+    case "auth/too-many-requests":
+      return "অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+    case "auth/network-request-failed":
+      return "নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ পরীক্ষা করুন।";
+    case "auth/operation-not-allowed":
+      return "ইমেইল/পাসওয়ার্ড লগইন Firebase Console-এ চালু করা নেই।";
+    default:
+      // Fall back to any server-provided message (e.g. not-authorized),
+      // otherwise a generic failure message.
+      if (err?.message && !err.message.startsWith("Firebase:")) return err.message;
+      return "লগইন ব্যর্থ হয়েছে।";
+  }
+}
+
 export default function AdminLogin() {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -44,11 +72,12 @@ export default function AdminLogin() {
 
       router.push("/admin");
     } catch (err) {
-      setError(err.message?.includes("auth/") ? "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" : err.message || "লগইন ব্যর্থ হয়েছে।");
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
   }
+
 
   async function handleTotpSubmit(e) {
     e.preventDefault();

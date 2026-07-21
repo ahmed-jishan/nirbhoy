@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "create-admin": "node scripts/create-admin.js",
+    "sync-admins": "node scripts/sync-admins.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
