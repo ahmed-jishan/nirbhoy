@@ -22,6 +22,7 @@ const STORAGE_KEY = "nirbhoy:lang";
 const DICT: Record<string, { bn: string; en: string }> = {
   // ── Navigation ─────────────────────────────────────────────────────
   "nav.feed": { bn: "ফিড", en: "Feed" },
+  "nav.stats": { bn: "পরিসংখ্যান", en: "Stats" },
   "nav.track": { bn: "স্ট্যাটাস", en: "Track" },
   "nav.how": { bn: "কীভাবে", en: "How it works" },
   "nav.submit": { bn: "[ রিপোর্ট করুন ]", en: "[ Report ]" },

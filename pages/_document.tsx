@@ -57,6 +57,14 @@ export default function Document() {
         <meta httpEquiv="Content-Security-Policy" content={csp} />
         <link rel="icon" href="/favicon.svg" />
         <link rel="manifest" href="/manifest.json" />
+        {/* ── Default Open Graph / Twitter Card meta (per-page overrides in <Head>) ── */}
+        <meta property="og:site_name" content="Nirbhoy" />
+        <meta property="og:locale" content="bn_BD" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nirbhoy.org/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@nirbhoy" />
+        <meta name="twitter:creator" content="@nirbhoy" />
         <meta name="theme-color" content="#0D9488" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

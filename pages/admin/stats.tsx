@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import AdminHeader from "../../components/AdminHeader";
+import TrendChart from "../../components/TrendChart";
+import TypePieChart from "../../components/TypePieChart";
+import DistrictBarChart from "../../components/DistrictBarChart";
 import { requireAdminPage } from "../../lib/session";
 
 export const getServerSideProps = requireAdminPage;
 
 export default function AdminStats({ admin }) {
   const [stats, setStats] = useState(null);
+  const [trendsData, setTrendsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [trendsLoading, setTrendsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedDivision, setSelectedDivision] = useState(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "trends" | "districts">("overview");
 
   useEffect(() => {
     fetch("/api/admin/stats")
@@ -20,6 +26,18 @@ export default function AdminStats({ admin }) {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setTrendsLoading(true);
+    fetch("/api/stats/trends")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) throw new Error(d.error);
+        setTrendsData(d);
+      })
+      .catch(() => {})
+      .finally(() => setTrendsLoading(false));
   }, []);
 
   return (
@@ -34,7 +52,30 @@ export default function AdminStats({ admin }) {
         {loading && <p className="mt-8 font-body text-sm text-text-muted">লোড হচ্ছে…</p>}
         {error && <p className="mt-8 font-body text-sm text-danger">{error}</p>}
 
-        {stats && (
+        {/* ── Tabs ─────────────────────────────────────────────────────── */}
+        <div className="mt-6 flex gap-1 border-b border-border pb-px">
+          {[
+            { key: "overview" as const, label: "সংক্ষিপ্ত" },
+            { key: "trends" as const, label: "ট্রেন্ড" },
+            { key: "districts" as const, label: "জেলা" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`px-4 py-2.5 font-terminal text-sm transition-all duration-200 border-b-2 -mb-px ${
+                activeTab === key
+                  ? "border-accent text-accent"
+                  : "border-transparent text-text-muted hover:text-text-primary"
+              }`}
+            >
+              $ {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Overview Tab ─────────────────────────────────────────────── */}
+        {activeTab === "overview" && stats && (
           <>
             {/* Stat cards */}
             <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -45,8 +86,8 @@ export default function AdminStats({ admin }) {
               <StatCard label="প্রত্যাখ্যাত" value={stats.rejected} color="text-danger" />
             </div>
 
-            {/* Type breakdown */}
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {/* Type breakdown + Pie chart */}
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
               <div className="card">
                 <p className="font-mono text-xs text-text-faint">ঘটনা / অপরাধ</p>
                 <p className="mt-2 font-display text-3xl font-semibold text-text-primary">{stats.incidentCount}</p>
@@ -62,6 +103,12 @@ export default function AdminStats({ admin }) {
                   {stats.total > 0 ? `${Math.round((stats.withProof / stats.total) * 100)}%` : "০%"}
                 </p>
               </div>
+            </div>
+
+            {/* Type Pie Chart */}
+            <div className="card mt-6">
+              <p className="font-terminal text-xs text-text-faint tracking-wider mb-4">$ রিপোর্টের ধরন</p>
+              <TypePieChart incidents={stats.incidentCount || 0} grievances={stats.grievanceCount || 0} />
             </div>
 
             {/* Division-wise breakdown */}
@@ -101,36 +148,8 @@ export default function AdminStats({ admin }) {
               </div>
             )}
 
-            {/* Top districts */}
-            {stats.topDistricts && stats.topDistricts.length > 0 && (
-              <div className="card mt-6">
-                <h3 className="font-display text-base font-medium text-text-primary">শীর্ষ জেলা</h3>
-                <p className="mt-1 font-body text-xs text-text-muted">সর্বোচ্চ রিপোর্ট জমা পড়েছে যেসব জেলায়</p>
-                <div className="mt-5 space-y-2">
-                  {stats.topDistricts.map((dist, idx) => (
-                    <div key={dist.name} className="flex items-center gap-3">
-                      <span className="w-5 text-center font-terminal text-xs text-text-faint">#{idx + 1}</span>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="font-code text-sm text-text-primary">{dist.name}</span>
-                          <span className="font-mono text-xs text-accent">{dist.count}টি</span>
-                        </div>
-                        <div className="relative h-4 w-full overflow-hidden rounded-md bg-elevated2">
-                          <div
-                            className="h-full rounded-md bg-accent/40 transition-all duration-500"
-                            style={{ width: `${dist.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="w-10 text-right font-terminal text-[10px] text-text-faint">{dist.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Daily trend */}
-            {stats.dailyCounts.length > 0 && (
+            {stats.dailyCounts && stats.dailyCounts.length > 0 && (
               <div className="card mt-8">
                 <h3 className="font-display text-base font-medium text-text-primary">গত ৩০ দিনের রিপোর্ট</h3>
                 <div className="mt-4 flex items-end gap-1 h-32">
@@ -138,10 +157,7 @@ export default function AdminStats({ admin }) {
                     const max = Math.max(...stats.dailyCounts.map((x) => x.count), 1);
                     const height = (d.count / max) * 100;
                     return (
-                      <div
-                        key={d.date}
-                        className="group relative flex-1 min-w-[4px]"
-                      >
+                      <div key={d.date} className="group relative flex-1 min-w-[4px]">
                         <div
                           className="w-full bg-accent/60 hover:bg-accent rounded-t transition-colors"
                           style={{ height: `${Math.max(height, 2)}%` }}
@@ -157,6 +173,36 @@ export default function AdminStats({ admin }) {
               </div>
             )}
           </>
+        )}
+
+        {/* ── Trends Tab ───────────────────────────────────────────────── */}
+        {activeTab === "trends" && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+              <p className="font-code text-xs text-text-muted">
+                সময়ের সাথে সাথে রিপোর্ট জমা পড়ার প্রবণতা — লাইন টগল করে নির্দিষ্ট ধরন দেখুন।
+              </p>
+            </div>
+            <div className="card">
+              <p className="font-terminal text-xs text-text-faint tracking-wider mb-4">$ সময় অনুযায়ী রিপোর্ট</p>
+              <TrendChart data={trendsData?.monthly || []} loading={trendsLoading} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Districts Tab ────────────────────────────────────────────── */}
+        {activeTab === "districts" && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+              <p className="font-code text-xs text-text-muted">
+                জেলা অনুযায়ী রিপোর্টের তুলনা — হোভার করে ঘটনা ও অভিযোগের সংখ্যা দেখুন।
+              </p>
+            </div>
+            <div className="card">
+              <p className="font-terminal text-xs text-text-faint tracking-wider mb-4">$ শীর্ষ জেলা (সর্বোচ্চ রিপোর্ট)</p>
+              <DistrictBarChart data={trendsData?.districtData || []} loading={trendsLoading} />
+            </div>
+          </div>
         )}
       </section>
     </>

@@ -6,6 +6,7 @@ import ThemeToggle from "./ThemeToggle";
 
 const NAV_KEYS = [
   { href: "/feed", key: "nav.feed" },
+  { href: "/stats", key: "nav.stats" },
   { href: "/track", key: "nav.track" },
   { href: "/how-it-works", key: "nav.how" },
   { href: "/safety", key: "nav.safety" },

@@ -8,6 +8,8 @@ import CaseTimeline from "../../components/CaseTimeline";
 import UpvoteButton from "../../components/UpvoteButton";
 import { useI18n } from "../../lib/i18n";
 import { SkeletonCaseDetail } from "../../components/Skeleton";
+import ShareButtons from "../../components/ShareButtons";
+import { buildSeoMeta } from "../../lib/seo";
 
 interface CaseDetail {
   id: string;
@@ -101,10 +103,29 @@ export default function CasePage() {
       : data.type
     : "";
 
+  const seoMeta = data
+    ? buildSeoMeta({
+        title: `${data.caseId}: ${data.title}`,
+        description: data.summary || `${data.location} এলাকায় ${data.type === "incident" ? "ঘটনা" : "অভিযোগ"} সম্পর্কে বিস্তারিত জানুন।`,
+        url: process.env.NEXT_PUBLIC_SITE_URL
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}/case/${data.caseId}`
+          : `https://nirbhoy.org/case/${data.caseId}`,
+        type: "article",
+      })
+    : [];
+
+  const seoMetaDefault = buildSeoMeta();
+
   return (
     <>
       <Head>
         <title>{data ? `${data.caseId} — Nirbhoy` : `${lang === "bn" ? "কেস" : "Case"} — Nirbhoy`}</title>
+        {/* Dynamic Open Graph / Twitter Card tags (override defaults from _document) */}
+        {(data ? seoMeta : seoMetaDefault).map((m, i) =>
+          m.property
+            ? <meta key={`og-${i}`} property={m.property} content={m.content} />
+            : <meta key={`meta-${i}`} name={m.name} content={m.content} />
+        )}
       </Head>
       <SiteHeader />
 
@@ -171,6 +192,10 @@ export default function CasePage() {
               >
                 {copied ? t("case.shareCopied") : `🔗 ${t("case.share")}`}
               </button>
+              <ShareButtons
+                caseId={data.caseId}
+                title={data.title}
+              />
               <button
                 type="button"
                 onClick={openPrintView}
