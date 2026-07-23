@@ -24,10 +24,26 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/quicktime"];
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".mov"];
 
+// ── Unicode-normalization-safe lookup ─────────────────────────────────────
+// Vercel's server may normalise Bengali characters differently (NFC vs NFD)
+// than the dev environment, causing plain-object key lookups to fail.
+// We build normalised Maps at the module level so lookups always match.
+function nfc(s: string): string {
+  return s.normalize("NFC");
+}
+
+function buildNfcMap<T>(raw: Record<string, T>): Map<string, T> {
+  const map = new Map<string, T>();
+  for (const [k, v] of Object.entries(raw)) {
+    map.set(nfc(k), v);
+  }
+  return map;
+}
+
 // Complete Bangladesh administrative hierarchy
 const DIVISIONS = ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ"];
 
-const DIVISION_DISTRICTS = {
+const DIVISION_DISTRICTS_RAW: Record<string, string[]> = {
   "ঢাকা": [
     "ঢাকা", "নারায়ণগঞ্জ", "গাজীপুর", "টাঙ্গাইল", "কিশোরগঞ্জ", "মানিকগঞ্জ",
     "মুন্সিগঞ্জ", "নরসিংদী", "ফরিদপুর", "মাদারীপুর", "শরীয়তপুর", "রাজবাড়ী", "গোপালগঞ্জ",
@@ -56,7 +72,7 @@ const DIVISION_DISTRICTS = {
   ],
 };
 
-const DISTRICT_THANAS = {
+const DISTRICT_THANAS_RAW: Record<string, string[]> = {
   "ঢাকা": ["সদর", "কোতোয়ালী", "যাত্রাবাড়ী", "ডেমরা", "গুলশান", "মিরপুর", "উত্তরা", "মোহাম্মদপুর", "ধানমন্ডি", "তেজগাঁও", "আদর্শ", "কেরানীগঞ্জ", "নবাবগঞ্জ", "দোহার", "সাভার", "ধামরাই"],
   "নারায়ণগঞ্জ": ["সদর", "আড়াইহাজার", "বন্দর", "রূপগঞ্জ", "সোনারগাঁও", "ফতুল্লা", "সিদ্ধিরগঞ্জ"],
   "গাজীপুর": ["সদর", "কালিয়াকৈর", "কালীগঞ্জ", "কাপাসিয়া", "শ্রীপুর"],
@@ -120,6 +136,10 @@ const DISTRICT_THANAS = {
   "জামালপুর": ["সদর", "ইসলামপুর", "দেওয়ানগঞ্জ", "বকশীগঞ্জ", "মাদারগঞ্জ", "মেলান্দহ", "সরিষাবাড়ী"],
   "শেরপুর": ["সদর", "নকলা", "নালিতাবাড়ী", "ঝিনাইগাতী", "শ্রীবরদী"],
 };
+
+// Build normalised Maps once at module level
+const DIVISION_DISTRICTS = buildNfcMap(DIVISION_DISTRICTS_RAW);
+const DISTRICT_THANAS = buildNfcMap(DISTRICT_THANAS_RAW);
 
 async function uploadSingleFile(file, setFileProgress) {
   const sigRes = await fetch("/api/upload-signature", { method: "POST" });
@@ -187,16 +207,16 @@ export default function Submit() {
   const captchaRef = useRef(null);
   const turnstileSiteKey = getTurnstileSiteKey();
 
-  // Filter districts by selected division
+  // Filter districts by selected division (using Map for NFC-safe lookup)
   const availableDistricts = useMemo(() => {
     if (!division) return [];
-    return DIVISION_DISTRICTS[division] || [];
+    return DIVISION_DISTRICTS.get(division) || [];
   }, [division]);
 
-  // Filter thanas by selected district
+  // Filter thanas by selected district (using Map for NFC-safe lookup)
   const availableThanas = useMemo(() => {
     if (!district) return [];
-    return DISTRICT_THANAS[district] || [];
+    return DISTRICT_THANAS.get(district) || [];
   }, [district]);
 
   // Reset district/thana when division changes
@@ -597,15 +617,17 @@ export default function Submit() {
                 </div>
               )}
 
-              {showPicker && (
-                <div className="mt-4">
-                  <MapPicker
-                    value={pickedLocation}
-                    onChange={setPickedLocation}
-                    height={380}
-                  />
-                </div>
-              )}
+              {/* Always mount MapPicker so the dynamic import & Leaflet init
+                  happen exactly once on page load. Visibility is toggled with
+                  CSS so re-opening is instant and never re-triggers the async
+                  import — critical for Vercel where lazy imports can stall. */}
+              <div className={`mt-4 ${showPicker ? "" : "hidden"}`}>
+                <MapPicker
+                  value={pickedLocation}
+                  onChange={setPickedLocation}
+                  height={380}
+                />
+              </div>
             </div>
           </div>
 
