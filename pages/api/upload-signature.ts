@@ -41,6 +41,7 @@ export default async function handler(req, res) {
       folder: FOLDER,
       publicId,
       type: "authenticated",
+      eager: "fl_strip_profile",
     });
   } catch (err) {
     logger.error({ err }, "POST /api/upload-signature failed");

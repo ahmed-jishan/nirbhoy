@@ -156,6 +156,7 @@ async function uploadSingleFile(file, setFileProgress) {
   formData.append("public_id", sig.publicId);
   formData.append("folder", sig.folder);
   formData.append("type", sig.type);
+  if (sig.eager) formData.append("eager", sig.eager);
 
   const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`;
 

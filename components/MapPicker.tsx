@@ -97,7 +97,7 @@ export default function MapPicker({
   className = "",
 }: {
   value?: { lat: number; lng: number; address?: string } | null;
-  onChange?: (v: { lat: number; lng: number; address: string } | null) => void;
+  onChange?: (_v: { lat: number; lng: number; address: string } | null) => void;
   height?: number;
   initialCenter?: [number, number];
   initialZoom?: number;
@@ -385,6 +385,10 @@ export default function MapPicker({
       setManualError(
         "লিংক বা লোকেশন বুঝতে পারিনি। Google Maps / OpenStreetMap লিংক অথবা 'lat, lng' লিখুন।"
       );
+      return;
+    }
+    if (!Number.isFinite(parsed.lat) || !Number.isFinite(parsed.lng)) {
+      setManualError("লোকেশনের কোঅর্ডিনেট সঠিক নয়। আবার চেষ্টা করুন।");
       return;
     }
     if (!inBangladesh(parsed.lat, parsed.lng)) {
