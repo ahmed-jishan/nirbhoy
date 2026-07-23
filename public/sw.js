@@ -10,9 +10,9 @@
  * and the app is served over HTTPS or localhost.
  */
 
-const CACHE_NAME = "nirbhoy-v1";
-const STATIC_CACHE = "nirbhoy-static-v1";
-const API_CACHE = "nirbhoy-api-v1";
+const CACHE_NAME = "nirbhoy-v2";
+const STATIC_CACHE = "nirbhoy-static-v2";
+const API_CACHE = "nirbhoy-api-v2";
 
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -73,14 +73,17 @@ self.addEventListener("fetch", (event) => {
   
   // Skip non-GET requests
   if (request.method !== "GET") return;
+
+  // Next.js build assets are content-hashed. Let the browser fetch them
+  // directly so a stale service-worker cache can never keep old client code.
+  if (url.pathname.startsWith("/_next/")) return;
   
   // Skip browser-sync / hot-reload requests in dev
   if (url.pathname.includes("__nextjs") || url.pathname.includes("webpack")) return;
 
   // Strategy 1: Static assets (JS, CSS, fonts, images) — Cache-first
   if (
-    url.pathname.match(/\.(js|css|woff2?|ttf|otf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/) ||
-    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.match(/\.(woff2?|ttf|otf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/) ||
     url.pathname.startsWith("/icons/")
   ) {
     event.respondWith(cacheFirst(request));

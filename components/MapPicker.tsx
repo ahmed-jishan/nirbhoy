@@ -121,14 +121,21 @@ export default function MapPicker({
   const [manualHint, setManualHint] = useState("");
   const [manualError, setManualError] = useState("");
 
+  async function getLeaflet() {
+    const cached = typeof window !== "undefined" ? (window as any).L : null;
+    if (cached) return cached;
+    const Lmod: any = await import("leaflet");
+    const L: any = Lmod.default || Lmod;
+    if (typeof window !== "undefined") (window as any).L = L;
+    return L;
+  }
+
   // Load map once
   useEffect(() => {
     const loadMap = async () => {
       try {
-        const Lmod: any = await import("leaflet");
-        const L: any = Lmod.default || Lmod;
+        const L: any = await getLeaflet();
         await import("leaflet/dist/leaflet.css");
-        if (typeof window !== "undefined") (window as any).L = L;
 
         if (!mapContainer.current || mapInstance.current) return;
 
@@ -243,9 +250,9 @@ export default function MapPicker({
   }
 
   // Draw a distinct blue pulsing "you are here" dot.
-  function drawUserMarker(latitude: number, longitude: number, accuracy: number) {
+  async function drawUserMarker(latitude: number, longitude: number, accuracy: number) {
     if (!mapInstance.current) return;
-    const L = (window as any).L || require("leaflet");
+    const L = await getLeaflet();
 
     if (userMarkerRef.current) {
       mapInstance.current.removeLayer(userMarkerRef.current);
@@ -311,14 +318,20 @@ export default function MapPicker({
   // Sync external `value` changes (e.g. parent cleared the pin).
   useEffect(() => {
     if (!loaded) return;
-    const L = (window as any).L || require("leaflet");
-    if (value && typeof value.lat === "number" && typeof value.lng === "number") {
-      placeMarker(L, value.lat, value.lng, false);
-    } else if (markerRef.current) {
-      markerRef.current.remove();
-      markerRef.current = null;
-      setAddress("");
-    }
+    let cancelled = false;
+    getLeaflet().then((L) => {
+      if (cancelled) return;
+      if (value && typeof value.lat === "number" && typeof value.lng === "number") {
+        placeMarker(L, value.lat, value.lng, false);
+      } else if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+        setAddress("");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value?.lat, value?.lng, loaded]);
 
@@ -327,7 +340,7 @@ export default function MapPicker({
     setLocating(true);
     setError("");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         if (!inBangladesh(latitude, longitude)) {
           setError("আপনার অবস্থান বাংলাদেশের বাইরে বলে মনে হচ্ছে। মানচিত্রে ম্যানুয়ালি ক্লিক করুন।");
@@ -335,12 +348,12 @@ export default function MapPicker({
           setTimeout(() => setError(""), 4500);
           // Still show the blue "you are here" so user gets orientation.
           mapInstance.current.flyTo([latitude, longitude], 12, { duration: 1.2 });
-          drawUserMarker(latitude, longitude, accuracy);
+          void drawUserMarker(latitude, longitude, accuracy);
           return;
         }
         mapInstance.current.flyTo([latitude, longitude], 17, { duration: 1.2 });
-        drawUserMarker(latitude, longitude, accuracy);
-        const L = (window as any).L || require("leaflet");
+        void drawUserMarker(latitude, longitude, accuracy);
+        const L = await getLeaflet();
         placeMarker(L, latitude, longitude, true);
         setLocating(false);
       },
@@ -364,7 +377,7 @@ export default function MapPicker({
 
   // Attempts to parse whatever the user pasted / typed into the manual
   // input. Accepts Google Maps URL, OSM URL, or plain "lat, lng".
-  function applyManualInput() {
+  async function applyManualInput() {
     setManualError("");
     setManualHint("");
     const parsed = parseLocationInput(manualInput);
@@ -378,7 +391,7 @@ export default function MapPicker({
       setManualError("এই কোঅর্ডিনেট বাংলাদেশের বাইরে।");
       return;
     }
-    const L = (window as any).L || require("leaflet");
+    const L = await getLeaflet();
     if (mapInstance.current) {
       mapInstance.current.flyTo([parsed.lat, parsed.lng], 17, { duration: 1.2 });
     }

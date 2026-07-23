@@ -24,7 +24,7 @@ export default function Document() {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https://res.cloudinary.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org",
         "media-src 'self' blob: https://res.cloudinary.com",
-        "connect-src 'self' https://api.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://tiles.openfreemap.org ws:",
+        "connect-src 'self' https://api.cloudinary.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://nominatim.openstreetmap.org https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org ws:",
         "worker-src 'self' blob:",
         "frame-src 'none'",
         "object-src 'none'",
@@ -34,7 +34,7 @@ export default function Document() {
       ].join("; ")
     : [
         "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com`,
+        `script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com`,
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https://res.cloudinary.com https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org",
         "media-src 'self' blob: https://res.cloudinary.com",
