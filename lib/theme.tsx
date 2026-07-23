@@ -87,6 +87,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, []);
 
+  if (!hydrated) return <>{children}</>;
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}

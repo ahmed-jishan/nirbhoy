@@ -191,6 +191,7 @@ const I18nContext = createContext<I18nContextValue>({
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("bn");
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from localStorage on mount.
   useEffect(() => {
@@ -204,6 +205,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    setHydrated(true);
   }, []);
 
   function setLang(l: Lang) {
@@ -229,7 +231,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
     return out;
   }
-
+  if (!hydrated) return <>{children}</>;
   return (
     <I18nContext.Provider value={{ lang, setLang, t }}>
       {children}

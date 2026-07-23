@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 // Dynamically import Map3DView so MapLibre only ships to clients that
@@ -39,6 +39,8 @@ export default function Map3DModal({
   title,
   type,
 }: Map3DModalProps) {
+  const [windowHeight, setWindowHeight] = useState(0);
+
   // Close on Escape and prevent body scroll while open.
   useEffect(() => {
     if (!open) return;
@@ -54,7 +56,17 @@ export default function Map3DModal({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setWindowHeight(window.innerHeight);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   if (!open || typeof lat !== "number" || typeof lng !== "number") return null;
+
+  const height = windowHeight ? Math.round(windowHeight * 0.9) - 48 : 520;
 
   return (
     <div
@@ -103,7 +115,7 @@ export default function Map3DModal({
             caseId={caseId}
             title={title}
             type={type}
-            height={Math.round(window.innerHeight * 0.9) - 48}
+            height={height}
             className="!rounded-none !border-0"
           />
         </div>

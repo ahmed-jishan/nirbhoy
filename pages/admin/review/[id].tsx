@@ -35,17 +35,22 @@ const PRECISION_LABEL = {
 const FETCH_TIMEOUT = 15000; // 15 seconds
 
 /** Admin proof viewer — collapsible, always fetches signed URLs on expand */
-function ProofsViewer({ proofs }: { proofs: Array<{ publicId: string; resourceType: string }> }) {
+function ProofsViewer({
+  proofs,
+  complaintId,
+}: {
+  proofs: Array<{ publicId: string; resourceType: string }>;
+  complaintId: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [proofUrls, setProofUrls] = useState<Array<{ url: string; resourceType: string; publicId: string }>>([]);
   const [selectedProof, setSelectedProof] = useState<{ url: string; resourceType: string; publicId: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open || proofUrls.length > 0) return;
+    if (!open || proofUrls.length > 0 || !complaintId) return;
     setLoading(true);
-    const id = window.location.pathname.split("/").pop();
-    fetch(`/api/admin/proof-url?id=${id}`)
+    fetch(`/api/admin/proof-url?id=${encodeURIComponent(complaintId)}`)
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d.urls)) {
@@ -55,7 +60,7 @@ function ProofsViewer({ proofs }: { proofs: Array<{ publicId: string; resourceTy
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [open, proofUrls.length]);
+  }, [open, proofUrls.length, complaintId]);
 
   return (
     <div className="mt-5 border-t border-border pt-4">
@@ -129,6 +134,7 @@ function ProofsViewer({ proofs }: { proofs: Array<{ publicId: string; resourceTy
 export default function ReviewComplaint({ admin }) {
   const router = useRouter();
   const { id } = router.query;
+  const complaintId = typeof id === "string" ? id : Array.isArray(id) ? id[0] : null;
 
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -145,7 +151,7 @@ export default function ReviewComplaint({ admin }) {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!id) return;
+    if (!complaintId) return;
     const thisRequest = ++requestIdRef.current;
     setLoading(true);
     setError("");
@@ -154,7 +160,7 @@ export default function ReviewComplaint({ admin }) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    fetch(`/api/admin/complaints/${id}`, { signal: controller.signal })
+    fetch(`/api/admin/complaints/${encodeURIComponent(complaintId)}`, { signal: controller.signal })
       .then((r) => {
         if (requestIdRef.current !== thisRequest) return null;
         return r.json();
@@ -335,7 +341,7 @@ export default function ReviewComplaint({ admin }) {
             )}
 
             {complaint.proofs && complaint.proofs.length > 0 ? (
-              <ProofsViewer proofs={complaint.proofs} />
+              <ProofsViewer proofs={complaint.proofs} complaintId={complaint.caseId} />
             ) : (
               <p className="mt-5 border-t border-border pt-4 font-mono text-xs text-text-faint">কোনো প্রমাণ ফাইল জমা দেওয়া হয়নি।</p>
             )}
