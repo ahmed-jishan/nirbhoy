@@ -4,15 +4,12 @@
  */
 
 export function applySecurityHeaders(res) {
-  const headers = {
+const headers = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "X-XSS-Protection": "1; mode=block",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
-    "Cross-Origin-Embedder-Policy": "require-corp",
-    "Cross-Origin-Opener-Policy": "same-origin",
-    "Cross-Origin-Resource-Policy": "same-origin",
   };
 
   for (const [key, value] of Object.entries(headers)) {
