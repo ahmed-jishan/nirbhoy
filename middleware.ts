@@ -39,6 +39,10 @@ function isAdminPath(pathname: string): boolean {
   return pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 }
 
+function isPublicAdminAuthPath(pathname: string): boolean {
+  return pathname === "/admin/login" || pathname === "/api/admin/session";
+}
+
 /** Quick netmask match for a single IP against a CIDR (e.g. "192.168.1.0/24"). */
 function ipInCidr(ip: string, cidr: string): boolean {
   const [range, bits = "32"] = cidr.split("/");
@@ -67,6 +71,7 @@ function isIpAllowed(req: NextRequest): boolean {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdminSurface = isAdminPath(pathname);
+  const isPublicAdminAuth = isPublicAdminAuthPath(pathname);
 
   // IP allowlist check: apply to all admin surfaces + gate
   if ((isAdminSurface || pathname.startsWith("/gate/")) && !isIpAllowed(req)) {
@@ -101,7 +106,7 @@ export function middleware(req: NextRequest) {
   // (4) Admin surface: require the gate cookie OR an active admin session
   // cookie (existing admins should never be locked out mid-session even
   // if the slug changed).
-  if (isAdminSurface) {
+  if (isAdminSurface && !isPublicAdminAuth) {
     const hasGate = req.cookies.get(GATE_COOKIE)?.value === GATE_VALUE;
     const sessionCookieName = process.env.NIRBHOY_SESSION_COOKIE || "nirbhoy_session";
     const hasSession = Boolean(req.cookies.get(sessionCookieName)?.value);
