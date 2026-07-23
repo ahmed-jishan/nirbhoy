@@ -428,43 +428,65 @@ export default function Submit() {
                 </select>
               </div>
 
-              {/* District — filtered by division */}
+              {/* District — filtered by division, with text fallback */}
               <div>
                 <label className="field-label !text-xs !mb-1">জেলা *</label>
-                <select
-                  value={district}
-                  onChange={(e) => handleDistrictChange(e.target.value)}
-                  className="field-input"
-                  required
-                  disabled={!division}
-                >
-                  <option value="">— জেলা নির্বাচন করুন —</option>
-                  {availableDistricts.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                {division && availableDistricts.length > 0 ? (
+                  <select
+                    value={district}
+                    onChange={(e) => handleDistrictChange(e.target.value)}
+                    className="field-input"
+                    required
+                  >
+                    <option value="">— জেলা নির্বাচন করুন —</option>
+                    {availableDistricts.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={district}
+                    onChange={(e) => { setDistrict(e.target.value); setThana(""); }}
+                    className="field-input"
+                    placeholder={division ? "জেলার নাম লিখুন" : "প্রথমে বিভাগ নির্বাচন করুন"}
+                    required
+                    readOnly={!division}
+                  />
+                )}
                 {division && availableDistricts.length === 0 && (
-                  <p className="field-hint">এই বিভাগের অধীনে কোনো জেলা পাওয়া যায়নি</p>
+                  <p className="field-hint">এই বিভাগের জন্য তালিকা তৈরি হয়নি — দয়া করে জেলার নাম টাইপ করুন</p>
                 )}
               </div>
 
-              {/* Thana — filtered by district */}
+              {/* Thana — filtered by district, with text fallback */}
               <div>
                 <label className="field-label !text-xs !mb-1">থানা *</label>
-                <select
-                  value={thana}
-                  onChange={(e) => setThana(e.target.value)}
-                  className="field-input"
-                  required
-                  disabled={!district}
-                >
-                  <option value="">— থানা নির্বাচন করুন —</option>
-                  {availableThanas.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                {district && availableThanas.length > 0 ? (
+                  <select
+                    value={thana}
+                    onChange={(e) => setThana(e.target.value)}
+                    className="field-input"
+                    required
+                  >
+                    <option value="">— থানা নির্বাচন করুন —</option>
+                    {availableThanas.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={thana}
+                    onChange={(e) => setThana(e.target.value)}
+                    className="field-input"
+                    placeholder={district ? "থানার নাম লিখুন" : "প্রথমে জেলা নির্বাচন করুন"}
+                    required
+                    readOnly={!district}
+                  />
+                )}
                 {district && availableThanas.length === 0 && (
-                  <p className="field-hint">এই জেলার অধীনে কোনো থানা পাওয়া যায়নি</p>
+                  <p className="field-hint">এই জেলার জন্য তালিকা তৈরি হয়নি — দয়া করে থানার নাম টাইপ করুন</p>
                 )}
               </div>
 

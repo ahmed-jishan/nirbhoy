@@ -23,7 +23,7 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-border bg-bg/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
