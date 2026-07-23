@@ -4,7 +4,6 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
-import ExportButton from "../components/ExportButton";
 import { SkeletonFeed } from "../components/Skeleton";
 
 
@@ -192,10 +191,10 @@ export default function Feed() {
                 <button
                   key={t}
                   onClick={() => setTypeFilter(t)}
-                  className={`rounded-none border px-3 py-1.5 font-terminal text-xs tracking-wider transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 font-terminal text-xs font-medium tracking-wider transition-all duration-200 ${
                     typeFilter === t
-                      ? "border-accent/60 bg-accent-glow text-accent"
-                      : "border-borderStrong text-text-muted hover:text-text-primary"
+                      ? "bg-bg text-text-primary border border-borderStrong shadow-sm"
+                      : "text-text-muted hover:text-text-primary border border-transparent"
                   }`}
                 >
                   {t === "all" ? "$ সব" : `$ ${TYPE_LABEL[t]}`}
