@@ -34,6 +34,98 @@ const PRECISION_LABEL = {
 };
 const FETCH_TIMEOUT = 15000; // 15 seconds
 
+/** Admin proof viewer — collapsible, always fetches signed URLs on expand */
+function ProofsViewer({ proofs }: { proofs: Array<{ publicId: string; resourceType: string }> }) {
+  const [open, setOpen] = useState(false);
+  const [proofUrls, setProofUrls] = useState<Array<{ url: string; resourceType: string; publicId: string }>>([]);
+  const [selectedProof, setSelectedProof] = useState<{ url: string; resourceType: string; publicId: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || proofUrls.length > 0) return;
+    setLoading(true);
+    const id = window.location.pathname.split("/").pop();
+    fetch(`/api/admin/proof-url?id=${id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.urls)) {
+          setProofUrls(d.urls);
+          if (d.urls.length > 0) setSelectedProof(d.urls[0]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [open, proofUrls.length]);
+
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <p className="font-mono text-xs text-text-faint">
+          {proofs.length}টি প্রমাণ ফাইল
+        </p>
+        <span className={`font-mono text-[10px] text-accent transition-transform ${open ? "rotate-180" : ""}`}>
+          ▼
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-3 animate-fade-in">
+          {loading && (
+            <p className="font-mono text-xs text-text-muted animate-pulse">$ লোড হচ্ছে...</p>
+          )}
+          {!loading && proofUrls.length === 0 && (
+            <p className="font-mono text-xs text-text-faint">প্রমাণ লোড করা যায়নি।</p>
+          )}
+          {!loading && proofUrls.length > 0 && (
+            <>
+              {selectedProof && (
+                <div className="rounded-md border border-border bg-bg overflow-hidden">
+                  {selectedProof.resourceType === "video" ? (
+                    <video src={selectedProof.url} controls className="w-full max-h-[400px] object-contain" />
+                  ) : (
+                    <img src={selectedProof.url} alt="Proof" className="w-full max-h-[400px] object-contain" />
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {proofUrls.map((p, i) => (
+                  <button
+                    key={p.publicId}
+                    type="button"
+                    onClick={() => setSelectedProof(p)}
+                    className={`relative h-16 w-16 overflow-hidden rounded-md border-2 transition-colors ${
+                      selectedProof?.publicId === p.publicId
+                        ? "border-accent"
+                        : "border-border hover:border-accent/60"
+                    }`}
+                  >
+                    {p.resourceType === "video" ? (
+                      <div className="flex h-full w-full items-center justify-center bg-elevated2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#7C8BA0">
+                          <polygon points="8,5 19,12 8,19" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <img src={p.url} alt={`Proof ${i + 1}`} className="h-full w-full object-cover" />
+                    )}
+                    <span className="absolute bottom-0.5 right-1 rounded bg-bg/80 px-1 font-mono text-[10px] text-text-faint">
+                      {i + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ReviewComplaint({ admin }) {
   const router = useRouter();
   const { id } = router.query;
@@ -48,19 +140,13 @@ export default function ReviewComplaint({ admin }) {
   const [publicTitle, setPublicTitle] = useState("");
   const [publicSummary, setPublicSummary] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
-  const [proofUrls, setProofUrls] = useState([]);
-  const [proofLoading, setProofLoading] = useState(false);
-  const [selectedProof, setSelectedProof] = useState(null);
-  // 3D modal toggle — the modal handles its own MapLibre lifecycle.
+  const [proofsVisible, setProofsVisible] = useState(false);
   const [show3D, setShow3D] = useState(false);
-  // Track the latest request to ignore stale responses from React 18 StrictMode
   const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (!id) return;
-
     const thisRequest = ++requestIdRef.current;
-
     setLoading(true);
     setError("");
     setComplaint(null);
@@ -70,19 +156,20 @@ export default function ReviewComplaint({ admin }) {
 
     fetch(`/api/admin/complaints/${id}`, { signal: controller.signal })
       .then((r) => {
-        if (requestIdRef.current !== thisRequest) return null; // stale request
+        if (requestIdRef.current !== thisRequest) return null;
         return r.json();
       })
       .then((d) => {
-        if (requestIdRef.current !== thisRequest || !d) return; // stale
+        if (requestIdRef.current !== thisRequest || !d) return;
         if (d.error) throw new Error(d.error);
         setComplaint(d.complaint);
         setPublicTitle(d.complaint.publicTitle || d.complaint.title);
         setPublicSummary(d.complaint.publicSummary || "");
         setRejectionReason(d.complaint.rejectionReason || "");
+        setProofsVisible(Boolean(d.complaint.proofsVisible));
       })
       .catch((e) => {
-        if (requestIdRef.current !== thisRequest) return; // stale — ignore
+        if (requestIdRef.current !== thisRequest) return;
         if (e.name === "AbortError") {
           setError("সার্ভার থেকে সাড়া পাওয়া যায়নি। আবার চেষ্টা করুন।");
         } else {
@@ -90,7 +177,7 @@ export default function ReviewComplaint({ admin }) {
         }
       })
       .finally(() => {
-        if (requestIdRef.current !== thisRequest) return; // stale — ignore
+        if (requestIdRef.current !== thisRequest) return;
         clearTimeout(timeout);
         setLoading(false);
       });
@@ -101,31 +188,7 @@ export default function ReviewComplaint({ admin }) {
     };
   }, [id]);
 
-  async function loadProofs() {
-    setProofLoading(true);
-    setError("");
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-      const res = await fetch(`/api/admin/proof-url?id=${id}`, { signal: controller.signal });
-      clearTimeout(timeout);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProofUrls(data.urls);
-      if (data.urls.length > 0) setSelectedProof(data.urls[0]);
-    } catch (e) {
-      if (e.name === "AbortError") {
-        setError("প্রমাণ লোড করতে সময় বেশি লাগছে। আবার চেষ্টা করুন।");
-      } else {
-        setError(e.message);
-      }
-    } finally {
-      setProofLoading(false);
-    }
-  }
-
   async function updateStatus(status) {
-    // Client-side validation
     if (status === "published") {
       if (!publicSummary || publicSummary.trim().length < 10) {
         setError("পাবলিক সারাংশ কমপক্ষে ১০ অক্ষর লিখুন। কোনো নাম বা শনাক্তযোগ্য তথ্য দেবেন না।");
@@ -145,26 +208,19 @@ export default function ReviewComplaint({ admin }) {
       const res = await fetch(`/api/admin/complaints/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, publicTitle, publicSummary, rejectionReason }),
+        body: JSON.stringify({ status, publicTitle, publicSummary, rejectionReason, proofsVisible }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       setComplaint(data.complaint);
 
-      // Show success message based on action
-      if (status === "published") {
-        setSuccessMsg("✅ রিপোর্ট সফলভাবে প্রকাশিত হয়েছে!");
-      } else if (status === "reviewing") {
-        setSuccessMsg("✅ স্ট্যাটাস 'যাচাই চলছে' এ আপডেট করা হয়েছে।");
-      } else if (status === "rejected") {
-        setSuccessMsg("✅ রিপোর্ট প্রত্যাখ্যান করা হয়েছে।");
-      }
+      if (status === "published") setSuccessMsg("✅ রিপোর্ট সফলভাবে প্রকাশিত হয়েছে!");
+      else if (status === "reviewing") setSuccessMsg("✅ স্ট্যাটাস 'যাচাই চলছে' এ আপডেট করা হয়েছে।");
+      else if (status === "rejected") setSuccessMsg("✅ রিপোর্ট প্রত্যাখ্যান করা হয়েছে।");
 
-      // Auto-hide success message after 5 seconds
       setTimeout(() => setSuccessMsg(""), 5000);
     } catch (e) {
       if (e.name === "AbortError") {
@@ -230,13 +286,11 @@ export default function ReviewComplaint({ admin }) {
                 <div>
                   <dt className="font-mono text-xs text-text-faint">নির্ভুলতা</dt>
                   <dd className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] ${
-                        complaint.locationPrecision === "exact"
-                          ? "border-accent/50 bg-accent-soft text-accent"
-                          : "border-border text-text-muted"
-                      }`}
-                    >
+                    <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] ${
+                      complaint.locationPrecision === "exact"
+                        ? "border-accent/50 bg-accent-soft text-accent"
+                        : "border-border text-text-muted"
+                    }`}>
                       {complaint.locationPrecision === "exact" && "⚡ "}
                       {PRECISION_LABEL[complaint.locationPrecision] || "জেলা স্তর"}
                     </span>
@@ -254,126 +308,34 @@ export default function ReviewComplaint({ admin }) {
               </div>
             </dl>
 
-            {/* Location map — shows the exact pin the user placed, or the
-                thana/district approximation. Also exposes deep links to
-                Google Maps / OSM so admins can verify or share externally. */}
             {complaint.lat && complaint.lng && (
               <div className="mt-5 border-t border-border pt-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="font-mono text-xs text-text-faint">
-                    {complaint.locationPrecision === "exact"
-                      ? "📍 ব্যবহারকারী পিন করা লোকেশন"
-                      : "📍 আনুমানিক লোকেশন"}
+                    {complaint.locationPrecision === "exact" ? "📍 ব্যবহারকারী পিন করা লোকেশন" : "📍 আনুমানিক লোকেশন"}
                   </p>
                   <div className="flex gap-1">
-                    <a
-                      href={googleMapsLink(complaint.lat, complaint.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors"
-                    >
-                      Google Maps ↗
-                    </a>
-                    <a
-                      href={osmMapsLink(complaint.lat, complaint.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors"
-                    >
-                      OSM ↗
-                    </a>
-                    {/* Only offer 3D view for high-precision coords —
-                        rendering 3D buildings around a thana-centroid
-                        approximation would be misleading. */}
-                    {(complaint.locationPrecision === "exact" ||
-                      complaint.locationPrecision === "street") && (
-                      <button
-                        type="button"
-                        onClick={() => setShow3D(true)}
-                        className="rounded-md border border-accent/40 bg-accent-soft/40 px-2 py-0.5 font-mono text-[10px] text-accent hover:bg-accent hover:text-bg transition-colors"
-                      >
-                        ⛰ ৩ডি ভিউ
-                      </button>
+                    <a href={googleMapsLink(complaint.lat, complaint.lng)} target="_blank" rel="noopener noreferrer"
+                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors">Google Maps ↗</a>
+                    <a href={osmMapsLink(complaint.lat, complaint.lng)} target="_blank" rel="noopener noreferrer"
+                      className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors">OSM ↗</a>
+                    {(complaint.locationPrecision === "exact" || complaint.locationPrecision === "street") && (
+                      <button type="button" onClick={() => setShow3D(true)}
+                        className="rounded-md border border-accent/40 bg-accent-soft/40 px-2 py-0.5 font-mono text-[10px] text-accent hover:bg-accent hover:text-bg transition-colors">⛰ ৩ডি ভিউ</button>
                     )}
                   </div>
                 </div>
-                <MapView
-                  items={[
-                    {
-                      id: complaint.id,
-                      caseId: complaint.caseId,
-                      type: complaint.type,
-                      title: complaint.title,
-                      summary: complaint.description
-                        ? complaint.description.substring(0, 120)
-                        : "",
-                      location: complaint.location,
-                      lat: complaint.lat,
-                      lng: complaint.lng,
-                      locationPrecision: complaint.locationPrecision || "district",
-                      publishedAt: complaint.publishedAt || complaint.createdAt,
-                    },
-                  ]}
-                  activeCaseId={complaint.caseId}
-                  height={320}
-                />
+                <MapView items={[{
+                  id: complaint.id, caseId: complaint.caseId, type: complaint.type, title: complaint.title,
+                  summary: complaint.description ? complaint.description.substring(0, 120) : "",
+                  location: complaint.location, lat: complaint.lat, lng: complaint.lng,
+                  locationPrecision: complaint.locationPrecision || "district", publishedAt: complaint.publishedAt || complaint.createdAt,
+                }]} activeCaseId={complaint.caseId} height={320} />
               </div>
             )}
 
-            {/* Proof files section */}
             {complaint.proofs && complaint.proofs.length > 0 ? (
-              <div className="mt-5 border-t border-border pt-4">
-                <p className="mb-3 font-mono text-xs text-text-faint">
-                  {complaint.proofs.length}টি প্রমাণ ফাইল
-                </p>
-
-                {proofUrls.length === 0 ? (
-                  <button onClick={loadProofs} disabled={proofLoading} className="btn-secondary text-xs">
-                    {proofLoading ? "লোড হচ্ছে…" : "প্রমাণ দেখুন (৫ মিনিটের জন্য লিংক)"}
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Selected proof preview */}
-                    {selectedProof && (
-                      <div className="rounded-md border border-border bg-bg overflow-hidden">
-                        {selectedProof.resourceType === "video" ? (
-                          <video src={selectedProof.url} controls className="w-full max-h-[400px] object-contain" />
-                        ) : (
-                          <img src={selectedProof.url} alt="Proof" className="w-full max-h-[400px] object-contain" />
-                        )}
-                      </div>
-                    )}
-                    {/* Thumbnail strip */}
-                    <div className="flex flex-wrap gap-2">
-                      {proofUrls.map((p, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setSelectedProof(p)}
-                          className={`relative h-16 w-16 overflow-hidden rounded-md border-2 transition-colors ${
-                            selectedProof?.publicId === p.publicId
-                              ? "border-accent"
-                              : "border-border hover:border-accent/60"
-                          }`}
-                        >
-                          {p.resourceType === "video" ? (
-                            <div className="flex h-full w-full items-center justify-center bg-elevated2">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="#7C8BA0">
-                                <polygon points="8,5 19,12 8,19" />
-                              </svg>
-                            </div>
-                          ) : (
-                            <img src={p.url} alt={`Proof ${i + 1}`} className="h-full w-full object-cover" />
-                          )}
-                          <span className="absolute bottom-0.5 right-1 rounded bg-bg/80 px-1 font-mono text-[10px] text-text-faint">
-                            {i + 1}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <ProofsViewer proofs={complaint.proofs} />
             ) : (
               <p className="mt-5 border-t border-border pt-4 font-mono text-xs text-text-faint">কোনো প্রমাণ ফাইল জমা দেওয়া হয়নি।</p>
             )}
@@ -390,84 +352,53 @@ export default function ReviewComplaint({ admin }) {
               </div>
               <div>
                 <label className="field-label">পাবলিক সারাংশ</label>
-                <textarea
-                  className="field-input min-h-[110px] resize-y"
-                  value={publicSummary}
+                <textarea className="field-input min-h-[110px] resize-y" value={publicSummary}
                   onChange={(e) => setPublicSummary(e.target.value)}
-                  placeholder="যেমন: এলাকায় একটি চুরির ঘটনা রিপোর্ট হয়েছে এবং স্থানীয় প্রশাসনকে জানানো হয়েছে।"
-                />
+                  placeholder="যেমন: এলাকায় একটি চুরির ঘটনা রিপোর্ট হয়েছে এবং স্থানীয় প্রশাসনকে জানানো হয়েছে।" />
               </div>
               <div>
                 <label className="field-label">প্রত্যাখ্যানের কারণ (ঐচ্ছিক)</label>
                 <input className="field-input" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
               </div>
+              {complaint.status !== "published" && complaint.proofs && complaint.proofs.length > 0 && (
+                <div className="flex items-start gap-3 rounded-md border border-border p-3">
+                  <input id="proofsVisible" type="checkbox" checked={proofsVisible}
+                    onChange={(e) => setProofsVisible(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-borderStrong bg-elevated text-accent focus:ring-accent/40" />
+                  <div>
+                    <label htmlFor="proofsVisible" className="cursor-pointer font-code text-sm font-medium text-text-primary">প্রমাণ প্রকাশ করুন</label>
+                    <p className="mt-0.5 font-code text-xs text-text-muted">চেক করলে ব্যবহারকারী তার রিপোর্টের পাবলিক পেজে প্রমাণ (ছবি/ভিডিও) দেখতে পাবেন। ব্যক্তিগত তথ্য থাকলে চেক করবেন না।</p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {successMsg && (
-              <div className="mt-3 rounded-md border border-accent/30 bg-accent-soft/40 px-4 py-3">
-                <p className="font-body text-sm text-accent">{successMsg}</p>
-              </div>
-            )}
-            {error && (
-              <div className="mt-3 rounded-md border border-danger/40 bg-danger-soft px-4 py-3">
-                <p className="font-body text-sm text-danger">{error}</p>
-              </div>
-            )}
+            {successMsg && <div className="mt-3 rounded-md border border-accent/30 bg-accent-soft/40 px-4 py-3"><p className="font-body text-sm text-accent">{successMsg}</p></div>}
+            {error && <div className="mt-3 rounded-md border border-danger/40 bg-danger-soft px-4 py-3"><p className="font-body text-sm text-danger">{error}</p></div>}
 
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => updateStatus("reviewing")}
-                disabled={saving}
-                className="btn-secondary text-xs relative"
-              >
-                {saving && actionType === "reviewing" ? (
-                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> যাচাই চলছে...</>
-                ) : "যাচাই চলছে চিহ্নিত করুন"}
+              <button onClick={() => updateStatus("reviewing")} disabled={saving} className="btn-secondary text-xs relative">
+                {saving && actionType === "reviewing" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> যাচাই চলছে...</> : "যাচাই চলছে চিহ্নিত করুন"}
               </button>
-              <button
-                onClick={() => updateStatus("published")}
-                disabled={saving}
-                className="btn-primary text-xs relative"
-              >
-                {saving && actionType === "published" ? (
-                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রকাশ হচ্ছে...</>
-                ) : "প্রকাশ করুন"}
+              <button onClick={() => updateStatus("published")} disabled={saving} className="btn-primary text-xs relative">
+                {saving && actionType === "published" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রকাশ হচ্ছে...</> : "প্রকাশ করুন"}
               </button>
-              <button
-                onClick={() => updateStatus("rejected")}
-                disabled={saving}
-                className="btn-secondary text-xs !border-danger/40 !text-danger relative"
-              >
-                {saving && actionType === "rejected" ? (
-                  <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রত্যাখ্যান হচ্ছে...</>
-                ) : "প্রত্যাখ্যান করুন"}
+              <button onClick={() => updateStatus("rejected")} disabled={saving} className="btn-secondary text-xs !border-danger/40 !text-danger relative">
+                {saving && actionType === "rejected" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রত্যাখ্যান হচ্ছে...</> : "প্রত্যাখ্যান করুন"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Update / Timeline panel — always available so moderators can
-            track internal progress. Public updates only show up on the
-            public case page after the report has been published. */}
         <div className="mt-8">
-          <AdminUpdatePanel
-            complaintId={complaint.id}
-            publishedAt={complaint.publishedAt}
-          />
+          <AdminUpdatePanel complaintId={complaint.id} publishedAt={complaint.publishedAt} />
         </div>
       </section>
 
-      {/* 3D view modal — mounts only when opened, unmounts on close. */}
       {show3D && complaint.lat && complaint.lng && (
-        <Map3DModal
-          open={show3D}
-          onClose={() => setShow3D(false)}
-          lat={complaint.lat}
-          lng={complaint.lng}
-          caseId={complaint.caseId}
-          title={complaint.title}
-          type={complaint.type}
-        />
+        <Map3DModal open={show3D} onClose={() => setShow3D(false)}
+          lat={complaint.lat} lng={complaint.lng} caseId={complaint.caseId}
+          title={complaint.title} type={complaint.type} />
       )}
     </>
   );

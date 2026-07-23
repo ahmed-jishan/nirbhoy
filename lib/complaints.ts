@@ -407,6 +407,7 @@ export async function createComplaint(input) {
     publicTitle: null,
     publicSummary: null,
     rejectionReason: null,
+    proofsVisible: false,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     publishedAt: null,
@@ -510,6 +511,7 @@ export async function listComplaintsForAdmin({ status = null, limit = DEFAULT_PA
           location: d.location,
           hasProof: Array.isArray(d.proofs) ? d.proofs.length > 0 : Boolean(d.proofPublicId),
           proofCount: Array.isArray(d.proofs) ? d.proofs.length : (d.proofPublicId ? 1 : 0),
+          proofsVisible: Boolean(d.proofsVisible),
           createdAt: d.createdAt ? d.createdAt.toDate().toISOString() : null,
         };
       })
@@ -556,6 +558,7 @@ export async function getComplaintById(id) {
     lng: typeof d.lng === "number" ? d.lng : null,
     locationPrecision: d.locationPrecision || "district",
     proofs: d.proofs || (d.proofPublicId ? [{ publicId: d.proofPublicId, resourceType: d.proofResourceType || "image" }] : []),
+    proofsVisible: Boolean(d.proofsVisible),
     status: d.status,
     publicTitle: d.publicTitle,
     publicSummary: d.publicSummary,
@@ -566,10 +569,10 @@ export async function getComplaintById(id) {
   };
 }
 
-export async function updateComplaintStatus(id, { status, publicTitle, publicSummary, rejectionReason }) {
+export async function updateComplaintStatus(id, { status, publicTitle, publicSummary, rejectionReason, proofsVisible }) {
   const db = adminDb();
   const ref = db.collection(COMPLAINTS).doc(id);
-  const update = {
+  const update: Record<string, any> = {
     status,
     updatedAt: FieldValue.serverTimestamp(),
   };
@@ -578,6 +581,8 @@ export async function updateComplaintStatus(id, { status, publicTitle, publicSum
     update.publicSummary = publicSummary || null;
     update.publishedAt = FieldValue.serverTimestamp();
     update.rejectionReason = null;
+    // Only set proofsVisible when publishing — default false
+    update.proofsVisible = Boolean(proofsVisible);
   } else if (status === "rejected") {
     update.rejectionReason = rejectionReason || null;
   }

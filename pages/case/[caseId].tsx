@@ -24,6 +24,11 @@ interface CaseDetail {
   status: string;
   upvotes: number;
   publishedAt: string | null;
+  proofsVisible: boolean;
+  proofs: Array<{
+    publicId: string;
+    resourceType: string;
+  }>;
   updates: Array<{
     id: string;
     title: string;
@@ -33,6 +38,79 @@ interface CaseDetail {
     authorEmail: string | null;
     createdAt: string | null;
   }>;
+}
+
+/** Fetches signed Cloudinary proof URLs and renders them in a gallery. */
+function ProofsGallery({ caseId }: { caseId: string }) {
+  const { t } = useI18n();
+  const [proofUrls, setProofUrls] = useState<Array<{ url: string; resourceType: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/case/${encodeURIComponent(caseId)}/proofs`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && Array.isArray(d.proofs)) setProofUrls(d.proofs);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [caseId]);
+
+  if (loading) {
+    return (
+      <div className="mt-8 border-t border-border pt-8">
+        <h2 className="font-display text-xl font-semibold text-text-primary">
+          <span className="text-accent">#</span> প্রমাণ
+        </h2>
+        <p className="mt-2 font-code text-xs text-text-muted animate-pulse">$ প্রমাণ লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  if (proofUrls.length === 0) return null;
+
+  return (
+    <div className="mt-8 border-t border-border pt-8">
+      <h2 className="font-display text-xl font-semibold text-text-primary">
+        <span className="text-accent">#</span> {t("case.proofs") || "প্রমাণ"}
+      </h2>
+      <p className="mt-2 font-code text-xs text-text-muted">
+        <span className="term-info">$</span> {t("case.proofsIntro") || "এই রিপোর্টের সাথে সংযুক্ত প্রমাণ।"}
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {proofUrls.map((proof, i) => (
+          <a
+            key={i}
+            href={proof.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative aspect-video overflow-hidden rounded-md border border-border bg-elevated hover:border-accent/60 transition-colors"
+          >
+            {proof.resourceType === "video" ? (
+              <div className="flex h-full w-full items-center justify-center bg-elevated2">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="#7C8BA0">
+                  <polygon points="8,5 19,12 8,19" />
+                </svg>
+              </div>
+            ) : (
+              <img
+                src={proof.url}
+                alt={`প্রমাণ ${i + 1}`}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                loading="lazy"
+              />
+            )}
+            <span className="absolute bottom-1 right-1 rounded bg-bg/80 px-1.5 py-0.5 font-terminal text-[10px] text-text-faint">
+              {i + 1}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -49,7 +127,6 @@ export default function CasePage() {
   const [data, setData] = useState<CaseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!caseId || typeof caseId !== "string") return;
@@ -72,22 +149,8 @@ export default function CasePage() {
     return () => controller.abort();
   }, [caseId]);
 
-  async function copyShareLink() {
-    if (typeof window === "undefined") return;
-    const url = `${window.location.origin}/case/${caseId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
-  }
-
   function openPrintView() {
     if (!data) return;
-    // Open the print-friendly page in a new tab. It auto-invokes the
-    // browser's print dialog, which offers "Save as PDF" on every OS.
     window.open(
       `/case/${encodeURIComponent(data.caseId)}/print`,
       "_blank",
@@ -120,7 +183,6 @@ export default function CasePage() {
     <>
       <Head>
         <title>{data ? `${data.caseId} — Nirbhoy` : `${lang === "bn" ? "কেস" : "Case"} — Nirbhoy`}</title>
-        {/* Dynamic Open Graph / Twitter Card tags (override defaults from _document) */}
         {(data ? seoMeta : seoMetaDefault).map((m, i) =>
           m.property
             ? <meta key={`og-${i}`} property={m.property} content={m.content} />
@@ -185,17 +247,7 @@ export default function CasePage() {
             {/* Action row: upvote, share, download, back to feed */}
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <UpvoteButton caseId={data.caseId} initialCount={data.upvotes || 0} />
-              <button
-                type="button"
-                onClick={copyShareLink}
-                className="btn-secondary !py-2 text-xs"
-              >
-                {copied ? t("case.shareCopied") : `🔗 ${t("case.share")}`}
-              </button>
-              <ShareButtons
-                caseId={data.caseId}
-                title={data.title}
-              />
+              <ShareButtons caseId={data.caseId} title={data.title} />
               <button
                 type="button"
                 onClick={openPrintView}
@@ -207,6 +259,11 @@ export default function CasePage() {
                 {'>'} {t("case.backToFeed")}
               </Link>
             </div>
+
+            {/* Proofs section — only shown when admin opted in */}
+            {data.proofsVisible && data.proofs.length > 0 && (
+              <ProofsGallery caseId={data.caseId} />
+            )}
 
             {/* Timeline */}
             <div className="mt-10 border-t border-border pt-8">

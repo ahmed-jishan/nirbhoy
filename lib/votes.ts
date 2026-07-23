@@ -9,12 +9,21 @@ import crypto from "crypto";
  * Anonymous, one-vote-per-visitor upvoting for published complaints.
  *
  * Uniqueness enforcement — since we never track user identity, we hash
- * (voterToken + caseId + secret) to form a deterministic voteId. Firestore's
- * document-id uniqueness gives us dedup for free. A voter can flip their
- * vote by calling the same endpoint again (toggle behaviour).
+ * (voterToken + fingerprint + caseId + secret) to form a deterministic voteId.
+ * Firestore's document-id uniqueness gives us dedup for free. A voter can
+ * flip their vote by calling the same endpoint again (toggle behaviour).
  *
- * The voter token itself is a random UUID generated client-side and stored
- * in localStorage — it never contains any personal data.
+ * Two-layer anti-gaming:
+ *  1. Voter token — random UUID generated client-side, stored in localStorage.
+ *     Never contains personal data. Server hashes it before storing.
+ *  2. Browser fingerprint — lightweight hash of non-identifying browser signals
+ *     (screen size, timezone, platform, language, user agent). This survives
+ *     localStorage clears and incognito mode changes. Both token + fingerprint
+ *     are combined in the voteId hash, so a voter who clears localStorage
+ *     cannot vote again from the same browser.
+ *
+ * The voter token and fingerprint are NEVER stored or logged — only the
+ * derived voteId hash ever touches Firestore.
  */
 
 const COMPLAINTS = "complaints";
@@ -24,10 +33,11 @@ const VOTES = "votes";
 // Not a security boundary — just a mild speedbump against enumeration.
 const HASH_SECRET = process.env.NIRBHOY_VOTE_SECRET || "nirbhoy-vote-salt-v1";
 
-function makeVoteId(voterToken: string, caseId: string) {
+function makeVoteId(voterToken: string, caseId: string, fingerprint?: string) {
+  const fp = fingerprint ? `:${fingerprint}` : "";
   return crypto
     .createHash("sha256")
-    .update(`${HASH_SECRET}:${voterToken}:${caseId}`)
+    .update(`${HASH_SECRET}:${voterToken}:${caseId}${fp}`)
     .digest("hex")
     .slice(0, 32);
 }
@@ -43,8 +53,11 @@ async function findComplaintByCaseId(caseId: string) {
  * Toggle a vote. Returns the new vote count and whether the caller has now
  * voted. Rejects votes on non-published complaints so admins/pending cases
  * don't get gamed.
+ *
+ * @param fingerprint - Optional browser fingerprint hash to prevent
+ *   re-voting after localStorage clears. Passed by modern clients only.
  */
-export async function toggleUpvote(caseId: string, voterToken: string) {
+export async function toggleUpvote(caseId: string, voterToken: string, fingerprint?: string) {
   if (!caseId || !voterToken || voterToken.length < 10) {
     throw new Error("Invalid vote request.");
   }
@@ -56,7 +69,7 @@ export async function toggleUpvote(caseId: string, voterToken: string) {
     throw new Error("Only published cases can be voted on.");
   }
 
-  const voteId = makeVoteId(voterToken, caseId);
+  const voteId = makeVoteId(voterToken, caseId, fingerprint);
   const voteRef = doc.ref.collection(VOTES).doc(voteId);
 
   return db.runTransaction(async (tx) => {
@@ -82,15 +95,16 @@ export async function toggleUpvote(caseId: string, voterToken: string) {
 }
 
 /**
- * Check whether a given voter token has already upvoted this case. Used by
- * the client on load to render the button in the correct state.
+ * Check whether a given voter token (+ optional fingerprint) has already
+ * upvoted this case. Used by the client on load to render the button in
+ * the correct state.
  */
-export async function hasVoted(caseId: string, voterToken: string) {
+export async function hasVoted(caseId: string, voterToken: string, fingerprint?: string) {
   if (!caseId || !voterToken) return false;
   try {
     const doc = await findComplaintByCaseId(caseId);
     if (!doc) return false;
-    const voteId = makeVoteId(voterToken, caseId);
+    const voteId = makeVoteId(voterToken, caseId, fingerprint);
     const snap = await doc.ref.collection(VOTES).doc(voteId).get();
     return snap.exists;
   } catch (err: any) {

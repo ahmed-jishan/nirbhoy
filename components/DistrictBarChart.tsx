@@ -47,7 +47,7 @@ export default function DistrictBarChart({ data, loading }: DistrictBarChartProp
 
   const barHeight = 28;
   const gap = 6;
-  const tooltipHeight = 20;
+  const tooltipHeight = 32;
   const extraBottomPadding = 10;
   // Increase chart height to accommodate tooltips below each bar
   const chartHeight = topData.length * (barHeight + gap) + 20 + tooltipHeight + extraBottomPadding;
@@ -152,13 +152,13 @@ export default function DistrictBarChart({ data, loading }: DistrictBarChartProp
                     stroke="rgba(13,148,136,0.4)"
                     strokeWidth="1"
                   />
-                  {/* District name */}
+                   {/* District name */}
                   <text
                     x={10}
-                    y={y + barHeight + tooltipHeight / 2 + 1}
+                    y={y + barHeight + tooltipHeight / 2 + 5}
                     fill="#F1F5F9"
-                    fontSize="10"
-                    fontFamily="'JetBrains Mono', monospace"
+                    fontSize="11"
+                    fontFamily="system-ui, sans-serif"
                     fontWeight="600"
                   >
                     {d.name}
@@ -166,40 +166,40 @@ export default function DistrictBarChart({ data, loading }: DistrictBarChartProp
                   {/* Divider */}
                   <text
                     x={labelWidth - 4}
-                    y={y + barHeight + tooltipHeight / 2 + 1}
+                    y={y + barHeight + tooltipHeight / 2 + 5}
                     fill="#64748B"
-                    fontSize="10"
-                    fontFamily="'VT323', monospace"
+                    fontSize="11"
+                    fontFamily="system-ui, sans-serif"
                   >
                     │
                   </text>
                   {/* Incidents */}
                   <text
                     x={labelWidth + 6}
-                    y={y + barHeight + tooltipHeight / 2 + 1}
+                    y={y + barHeight + tooltipHeight / 2 + 5}
                     fill="#DC2626"
-                    fontSize="10"
-                    fontFamily="'VT323', monospace"
+                    fontSize="11"
+                    fontFamily="system-ui, sans-serif"
                   >
                     ● ঘটনা: {d.incidents}
                   </text>
                   {/* Grievances */}
                   <text
-                    x={labelWidth + 90}
-                    y={y + barHeight + tooltipHeight / 2 + 1}
+                    x={labelWidth + 100}
+                    y={y + barHeight + tooltipHeight / 2 + 5}
                     fill="#0D9488"
-                    fontSize="10"
-                    fontFamily="'VT323', monospace"
+                    fontSize="11"
+                    fontFamily="system-ui, sans-serif"
                   >
                     ● অভিযোগ: {d.grievances}
                   </text>
                   {/* Total */}
                   <text
-                    x={labelWidth + 180}
-                    y={y + barHeight + tooltipHeight / 2 + 1}
+                    x={labelWidth + 200}
+                    y={y + barHeight + tooltipHeight / 2 + 5}
                     fill="#94A3B8"
-                    fontSize="10"
-                    fontFamily="'VT323', monospace"
+                    fontSize="11"
+                    fontFamily="system-ui, sans-serif"
                   >
                     = মোট: {d.total}
                   </text>

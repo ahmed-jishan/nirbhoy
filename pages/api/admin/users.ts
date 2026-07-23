@@ -10,7 +10,7 @@ async function handler(req, res) {
   if (!admin) return;
 
   // Only super_admin can manage users
-  if (admin.role !== "super_admin") {
+  if ((admin as any).role !== "super_admin") {
     return res.status(403).json({ error: "Only super admins can manage moderators." });
   }
 

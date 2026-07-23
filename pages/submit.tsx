@@ -153,7 +153,7 @@ async function uploadSingleFile(file, setFileProgress) {
     xhr.send(formData);
   });
 
-  return { publicId: result.public_id, resourceType };
+  return { publicId: (result as CloudinaryUploadResult).public_id, resourceType };
 }
 
 function formatFileSize(bytes) {
@@ -225,23 +225,23 @@ export default function Submit() {
     // Validate each file
     for (const file of selected) {
       // Check file type
-      const ext = "." + file.name.split(".").pop().toLowerCase();
-      if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
-        setError(`"${file.name}" ফাইলটি সমর্থিত নয়। শুধু ছবি (JPG, PNG, WebP, GIF) ও ভিডিও (MP4, WebM, MOV) অনুমোদিত।`);
+      const ext = "." + (file as any).name.split(".").pop().toLowerCase();
+      if (!ALLOWED_TYPES.includes((file as any).type) && !ALLOWED_EXTENSIONS.includes(ext)) {
+        setError(`"${(file as any).name}" ফাইলটি সমর্থিত নয়। শুধু ছবি (JPG, PNG, WebP, GIF) ও ভিডিও (MP4, WebM, MOV) অনুমোদিত।`);
         e.target.value = "";
         return;
       }
 
       // Check individual file size
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        setError(`"${file.name}" ফাইলটি ${MAX_FILE_SIZE_MB}MB এর বেশি। প্রতিটি ফাইল সর্বোচ্চ ${MAX_FILE_SIZE_MB}MB হতে পারে।`);
+      if ((file as any).size > MAX_FILE_SIZE_BYTES) {
+        setError(`"${(file as any).name}" ফাইলটি ${MAX_FILE_SIZE_MB}MB এর বেশি। প্রতিটি ফাইল সর্বোচ্চ ${MAX_FILE_SIZE_MB}MB হতে পারে।`);
         e.target.value = "";
         return;
       }
     }
 
-    const existingSize = files.reduce((sum, f) => sum + f.size, 0);
-    const newSize = selected.reduce((sum, f) => sum + f.size, 0);
+    const existingSize = files.reduce((sum: number, f: any) => sum + f.size, 0);
+    const newSize = selected.reduce((sum: number, f: any) => sum + f.size, 0);
     if (existingSize + newSize > MAX_TOTAL_BYTES) {
       setError(`সব ফাইলের মোট আকার ${MAX_TOTAL_MB}MB এর কম হতে হবে।`);
       e.target.value = "";
@@ -319,7 +319,7 @@ export default function Submit() {
     }
   }
 
-  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  const totalSize = files.reduce((sum: number, f: any) => sum + f.size, 0);
 
   if (caseId) {
     return (

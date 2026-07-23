@@ -182,6 +182,16 @@ export async function getPublicCaseByCaseId(caseId: string) {
 
   const updates = await listComplaintUpdates(doc.id, "public");
 
+  // Only expose proofs on the public page if admin explicitly opted in
+  const proofsVisible = Boolean(d.proofsVisible);
+  let proofs = [];
+  if (proofsVisible && Array.isArray(d.proofs) && d.proofs.length > 0) {
+    proofs = d.proofs.map((p: any) => ({
+      publicId: p.publicId,
+      resourceType: p.resourceType || "image",
+    }));
+  }
+
   return {
     id: doc.id,
     caseId: d.caseId,
@@ -195,6 +205,8 @@ export async function getPublicCaseByCaseId(caseId: string) {
     status: d.status,
     upvotes: typeof d.upvotes === "number" ? d.upvotes : 0,
     publishedAt: d.publishedAt ? d.publishedAt.toDate().toISOString() : null,
+    proofsVisible,
+    proofs,
     updates,
   };
 }

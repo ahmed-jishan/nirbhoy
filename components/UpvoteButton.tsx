@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
+import { getBrowserFingerprint } from "../lib/fingerprint";
 
 /**
  * UpvoteButton — anonymous, one-click upvote for a published case.
  *
- * Client-side identity is a random UUID stored in localStorage. It is
- * used only to enforce one-vote-per-browser; the server hashes it before
- * storing so we never keep raw tokens.
+ * Two-layer anti-gaming:
+ *  1. Voter token — random UUID stored in localStorage. Survives page reloads.
+ *  2. Browser fingerprint — lightweight hash of non-identifying browser
+ *     signals (screen size, timezone, platform, language, user agent).
+ *     This survives localStorage clears and different incognito tabs.
+ *
+ * Both are sent to the server and combined in a SHA-256 hash to form a
+ * deterministic voteId. The raw token and fingerprint are NEVER stored.
  */
 
 const TOKEN_KEY = "nirbhoy:voter-token";
@@ -24,6 +30,11 @@ function getOrCreateToken(): string {
     localStorage.setItem(TOKEN_KEY, token);
   }
   return token;
+}
+
+/** Fingerprint is computed once and cached across re-renders. */
+function getFingerprint(): string {
+  return getBrowserFingerprint();
 }
 
 export default function UpvoteButton({
@@ -44,8 +55,11 @@ export default function UpvoteButton({
   useEffect(() => {
     const token = getOrCreateToken();
     if (!token) return;
+    const fp = getFingerprint();
+    const params = new URLSearchParams({ token });
+    if (fp) params.set("fingerprint", fp);
     fetch(
-      `/api/case/${encodeURIComponent(caseId)}/vote?token=${encodeURIComponent(token)}`
+      `/api/case/${encodeURIComponent(caseId)}/vote?${params.toString()}`
     )
       .then((r) => r.json())
       .then((d) => {
@@ -71,10 +85,11 @@ export default function UpvoteButton({
     setBusy(true);
     setError("");
     try {
+      const fp = getFingerprint();
       const res = await fetch(`/api/case/${encodeURIComponent(caseId)}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, fingerprint: fp || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Vote failed");

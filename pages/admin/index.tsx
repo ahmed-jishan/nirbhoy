@@ -115,18 +115,21 @@ export default function AdminDashboard({ admin }) {
 
         {/* Status tabs + search result count */}
         <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-6 border-b border-border">
             {TABS.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setStatus(t.key)}
-                className={`rounded-full border px-4 py-1.5 font-body text-xs transition-colors ${
+                className={`relative pb-2 font-body text-xs transition-colors ${
                   status === t.key
-                    ? "border-accent/60 bg-accent-soft text-accent"
-                    : "border-borderStrong text-text-muted hover:text-text-primary"
+                    ? "text-accent"
+                    : "text-text-muted hover:text-text-primary"
                 }`}
               >
                 {t.label}
+                {status === t.key && (
+                  <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-16 bg-accent rounded-full" />
+                )}
               </button>
             ))}
           </div>
@@ -168,26 +171,7 @@ export default function AdminDashboard({ admin }) {
                   </tr>
                 )}
                 {filteredItems.map((item) => (
-                  <tr key={item.id} className="border-b border-border last:border-0 hover:bg-elevated/60">
-                    <td className="px-4 py-3">
-                      <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-accent hover:underline">
-                        {highlightMatch(item.caseId, searchQuery)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-text-muted">{TYPE_LABEL[item.type] || item.type}</td>
-                    <td className="px-4 py-3 text-text-primary">
-                      <Link href={`/admin/review/${item.id}`} className="hover:underline">
-                        {highlightMatch(item.title, searchQuery)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-text-muted">
-                      {item.proofCount > 0 ? `${item.proofCount}টি ফাইল` : "—"}
-                    </td>
-                    <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
-                    <td className="px-4 py-3 font-mono text-xs text-text-faint">
-                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString("bn-BD") : ""}
-                    </td>
-                  </tr>
+                  <ProofRow key={item.id} item={item} searchQuery={searchQuery} />
                 ))}
               </tbody>
             </table>
@@ -231,8 +215,76 @@ export default function AdminDashboard({ admin }) {
   );
 }
 
+/** Individual table row with proof visibility toggle */
+function ProofRow({ item, searchQuery }: { item: any; searchQuery: string }) {
+  const [visible, setVisible] = useState(item.proofsVisible);
+  const [toggling, setToggling] = useState(false);
+
+  async function toggleProofs(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (toggling) return;
+
+    setToggling(true);
+    const newVal = !visible;
+    try {
+      const res = await fetch(`/api/admin/complaints/${item.id}/proofs-visible`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proofsVisible: newVal }),
+      });
+      const data = await res.json();
+      if (res.ok) setVisible(data.proofsVisible);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setToggling(false);
+    }
+  }
+
+  return (
+    <tr className="border-b border-border last:border-0 hover:bg-elevated/60">
+      <td className="px-4 py-3">
+        <Link href={`/admin/review/${item.id}`} className="font-mono text-xs text-accent hover:underline">
+          {highlightMatch(item.caseId, searchQuery)}
+        </Link>
+      </td>
+      <td className="px-4 py-3 text-text-muted">{TYPE_LABEL[item.type] || item.type}</td>
+      <td className="px-4 py-3 text-text-primary">
+        <Link href={`/admin/review/${item.id}`} className="hover:underline">
+          {highlightMatch(item.title, searchQuery)}
+        </Link>
+      </td>
+      <td className="px-4 py-3">
+        {item.proofCount > 0 ? (
+          <button
+            type="button"
+            onClick={toggleProofs}
+            disabled={toggling}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-terminal text-[10px] transition-all duration-200 ${
+              visible
+                ? "border-accent/40 bg-accent-soft/40 text-accent hover:bg-accent-soft/60"
+                : "border-borderStrong bg-elevated text-text-faint hover:border-accent/30 hover:text-text-muted"
+            } disabled:opacity-50`}
+            title={visible ? "প্রমাণ দৃশ্যমান — ক্লিক করে লুকান" : "প্রমাণ লুকানো — ক্লিক করে দেখান"}
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${visible ? "bg-accent" : "bg-text-faint"}`} />
+            {visible ? "Active" : "Inactive"}
+          </button>
+        ) : (
+          <span className="text-text-faint font-terminal text-[10px]">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
+      <td className="px-4 py-3 font-mono text-xs text-text-faint">
+        {item.createdAt ? new Date(item.createdAt).toLocaleDateString("bn-BD") : ""}
+      </td>
+    </tr>
+  );
+}
+
 /** Highlight matching substring in search results */
-function highlightMatch(text, query) {
+function highlightMatch(text: string, query: string) {
   if (!query.trim() || !text) return text;
   const q = query.trim().toLowerCase();
   const lower = text.toLowerCase();

@@ -27,9 +27,9 @@ async function handler(req, res) {
     let incidentCount = 0;
     let grievanceCount = 0;
     let withProof = 0;
-    const dailyCounts = {};
-    const divisionCounts = {};
-    const districtCounts = {};
+    const dailyCounts: Record<string, number> = {};
+    const divisionCounts: Record<string, number> = {};
+    const districtCounts: Record<string, number> = {};
 
     // Known Bangladesh divisions for parsing
     const DIVISIONS = ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ"];

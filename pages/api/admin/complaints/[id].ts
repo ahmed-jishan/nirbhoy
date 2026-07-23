@@ -22,7 +22,7 @@ async function handler(req, res) {
 
   if (req.method === "PATCH") {
     try {
-      const { status, publicTitle, publicSummary, rejectionReason } = req.body || {};
+      const { status, publicTitle, publicSummary, rejectionReason, proofsVisible } = req.body || {};
       if (!STATUSES.includes(status)) {
         return res.status(400).json({ error: "Invalid status." });
       }
@@ -31,7 +31,7 @@ async function handler(req, res) {
           error: "Write a short public-safe summary (at least 10 characters) before publishing. Do not include any names.",
         });
       }
-      const complaint = await updateComplaintStatus(id, { status, publicTitle, publicSummary, rejectionReason });
+      const complaint = await updateComplaintStatus(id, { status, publicTitle, publicSummary, rejectionReason, proofsVisible });
       return res.status(200).json({ complaint });
     } catch (err) {
       logger.error({ err, id, status: req.body?.status }, "PATCH /api/admin/complaints/[id] failed");

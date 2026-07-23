@@ -5,11 +5,11 @@ import { useI18n, LanguageToggle } from "../lib/i18n";
 import ThemeToggle from "./ThemeToggle";
 
 const NAV_KEYS = [
-  { href: "/feed", key: "nav.feed" },
-  { href: "/stats", key: "nav.stats" },
-  { href: "/track", key: "nav.track" },
-  { href: "/how-it-works", key: "nav.how" },
-  { href: "/safety", key: "nav.safety" },
+  { href: "/feed", key: "nav.feed", icon: "📋" },
+  { href: "/stats", key: "nav.stats", icon: "📊" },
+  { href: "/track", key: "nav.track", icon: "🔍" },
+  { href: "/how-it-works", key: "nav.how", icon: "❓" },
+  { href: "/safety", key: "nav.safety", icon: "🛡️" },
 ];
 
 export default function SiteHeader() {
@@ -23,43 +23,46 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-border">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 group">
+    <header className="border-b border-border bg-bg/80 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 group shrink-0">
           <LanternMark />
-          <span className="font-display text-lg font-semibold tracking-tight text-text-primary group-hover:animate-glitch">
-            <span
-              aria-hidden="true"
-              className="inline-block text-text-muted transition-transform duration-300 group-hover:[transform:scaleX(1)]"
-              style={{ transform: "scaleX(-1)", transformOrigin: "center" }}
-            >
-              N
-            </span>
+          <span className="font-display text-lg font-semibold tracking-tight text-text-primary">
+            <span aria-hidden="true" className="inline-block text-text-muted" style={{ transform: "scaleX(-1)", display: "inline-block" }}>N</span>
             <span className="sr-only">N</span>irbhoy
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 font-body text-sm">
-          {NAV_KEYS.map(({ href, key }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`relative font-mono text-xs tracking-wider px-3 py-2 transition-all duration-200 ${
-                isActive(href)
-                  ? "text-accent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2px] after:bg-accent after:rounded-full after:shadow-[0_0_6px_rgba(13,148,136,0.5)]"
-                  : "text-text-muted hover:text-text-primary"
-              }`}
-            >
-              {'>'} {t(key)}
-            </Link>
-          ))}
-          <Link href="/submit" className="btn-secondary ml-2 !px-4 !py-2">
+        {/* Desktop nav — pill-style tabs */}
+        <nav className="hidden md:flex items-center gap-1.5 rounded-[10px] bg-elevated/60 p-1.5 font-body text-sm">
+          {NAV_KEYS.map(({ href, key, icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
+                  active
+                    ? "bg-bg text-text-primary border border-borderStrong shadow-sm"
+                    : "text-text-muted hover:text-text-primary hover:bg-elevated2/50 border border-transparent"
+                }`}
+              >
+                <span className="text-[13px]" aria-hidden="true">{icon}</span>
+                <span>{t(key)}</span>
+              </Link>
+            );
+          })}
+          <Link href="/submit" className="btn-secondary ml-1 !px-3.5 !py-2 !text-sm">
             {t("nav.submit")}
           </Link>
-          <ThemeToggle className="ml-1" />
-          <LanguageToggle className="ml-1" />
+          <div className="flex items-center gap-0.5 pl-1.5 border-l border-border ml-1">
+            <ThemeToggle />
+            <LanguageToggle />
+          </div>
         </nav>
 
+        {/* Mobile hamburger */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden rounded-md p-2 text-text-muted hover:text-text-primary transition-colors"
@@ -82,24 +85,29 @@ export default function SiteHeader() {
         </button>
       </div>
 
+      {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-border bg-elevated">
-          <nav className="flex flex-col gap-1 px-6 py-4 font-body text-sm">
-            {NAV_KEYS.map(({ href, key }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className={`w-full justify-start font-mono px-3 py-2 rounded-md transition-all duration-200 ${
-                  isActive(href)
-                    ? "text-accent bg-accent-soft/60 border-l-2 border-accent"
-                    : "text-text-muted hover:text-text-primary hover:bg-elevated2"
-                }`}
-              >
-                {'>'} {t(key)}
-              </Link>
-            ))}
-            <Link href="/submit" className="btn-secondary w-full mt-2" onClick={() => setMenuOpen(false)}>
+          <nav className="flex flex-col gap-1 px-6 py-4">
+            {NAV_KEYS.map(({ href, key, icon }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`inline-flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    active
+                      ? "bg-bg text-text-primary border border-borderStrong"
+                      : "text-text-muted hover:text-text-primary hover:bg-elevated2/50 border border-transparent"
+                  }`}
+                >
+                  <span className="text-[15px]" aria-hidden="true">{icon}</span>
+                  <span>{t(key)}</span>
+                </Link>
+              );
+            })}
+            <Link href="/submit" className="btn-secondary mt-2" onClick={() => setMenuOpen(false)}>
               {t("nav.submit")}
             </Link>
             <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
