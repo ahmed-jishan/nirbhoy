@@ -102,16 +102,16 @@ export default function AdminLogin() {
   return (
     <>
       <Head><title>মডারেটর লগইন — Nirbhoy</title></Head>
-      <div className="flex min-h-screen items-center justify-center bg-lantern px-6">
+      <div className="flex min-h-dvh items-center justify-center bg-lantern px-4 sm:px-6">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-2">
+          <div className="mb-6 sm:mb-8 flex items-center gap-2">
             <LanternMark />
-            <span className="font-display text-lg font-semibold text-text-primary">Nirbhoy</span>
-            <span className="ml-1 font-mono text-xs text-text-faint">/ মডারেটর</span>
+            <span className="font-display text-base sm:text-lg font-semibold text-text-primary">Nirbhoy</span>
+            <span className="ml-1 font-mono text-[10px] sm:text-xs text-text-faint">/ মডারেটর</span>
           </div>
 
           {!showTotp ? (
-            <form onSubmit={handleSubmit} className="card space-y-5">
+            <form onSubmit={handleSubmit} className="card space-y-4 sm:space-y-5 !p-4 sm:!p-6">
               <div>
                 <label className="field-label" htmlFor="email">ইমেইল</label>
                 <input
@@ -140,10 +140,10 @@ export default function AdminLogin() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleTotpSubmit} className="card space-y-5">
+            <form onSubmit={handleTotpSubmit} className="card space-y-4 sm:space-y-5 !p-4 sm:!p-6">
               <div className="text-center">
-                <p className="font-terminal text-xs text-text-muted mb-1">$ দুই-স্তর যাচাইকরণ</p>
-                <p className="font-code text-sm text-text-primary">আপনার অথেন্টিকেটর অ্যাপ থেকে কোড দিন</p>
+                <p className="font-terminal text-[11px] sm:text-xs text-text-muted mb-1">$ দুই-স্তর যাচাইকরণ</p>
+                <p className="font-code text-xs sm:text-sm text-text-primary">আপনার অথেন্টিকেটর অ্যাপ থেকে কোড দিন</p>
               </div>
               <div>
                 <label className="field-label" htmlFor="totpCode">৬-ডিজিটের কোড</label>
@@ -155,7 +155,7 @@ export default function AdminLogin() {
                   required
                   maxLength={6}
                   pattern="[0-9]{6}"
-                  className="field-input text-center text-2xl tracking-[0.5em] font-mono"
+                  className="field-input text-center text-xl sm:text-2xl tracking-[0.5em] font-mono"
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="______"

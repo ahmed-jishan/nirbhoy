@@ -60,17 +60,17 @@ export default function AdminPublished({ admin }) {
       <Head><title>প্রকাশিত রিপোর্ট — Nirbhoy</title></Head>
       <AdminHeader email={admin.email} />
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="font-display text-2xl font-semibold text-text-primary">প্রকাশিত রিপোর্ট</h1>
-            <p className="mt-1 font-body text-sm text-text-muted">
+            <h1 className="font-display text-xl sm:text-2xl font-semibold text-text-primary">প্রকাশিত রিপোর্ট</h1>
+            <p className="mt-1 font-body text-xs sm:text-sm text-text-muted">
               এগুলো এখন সবাই জনসাধারণের ফিডে দেখতে পাচ্ছে।
             </p>
           </div>
 
           {/* Search bar */}
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-72 lg:w-80">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 text-text-faint pointer-events-none"
               width="14"
@@ -108,14 +108,14 @@ export default function AdminPublished({ admin }) {
         </div>
 
         {searchQuery && (
-          <div className="mt-4">
+          <div className="mt-3 sm:mt-4">
             <span className="font-mono text-xs text-text-faint">
               {filteredItems.length}টি ফলাফল
             </span>
           </div>
         )}
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 sm:mt-6 space-y-3">
           {loading && <p className="font-body text-sm text-text-muted">লোড হচ্ছে…</p>}
           {!loading && filteredItems.length === 0 && (
             <p className="font-body text-sm text-text-muted">
@@ -128,15 +128,15 @@ export default function AdminPublished({ admin }) {
             <Link
               key={item.id}
               href={`/admin/review/${item.id}`}
-              className="card flex items-center justify-between !p-4 hover:border-accent/40"
+              className="card flex flex-col sm:flex-row sm:items-center justify-between gap-2 !p-4 hover:border-accent/40"
             >
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="font-mono text-xs text-text-faint">{item.caseId}</span>
-                <p className="mt-1 font-body text-sm text-text-primary">
+                <p className="mt-1 font-body text-sm text-text-primary truncate">
                   {highlightMatch(item.title, searchQuery)}
                 </p>
               </div>
-              <span className="font-mono text-xs text-text-muted">{TYPE_LABEL[item.type]}</span>
+              <span className="font-mono text-xs text-text-muted shrink-0">{TYPE_LABEL[item.type]}</span>
             </Link>
           ))}
         </div>

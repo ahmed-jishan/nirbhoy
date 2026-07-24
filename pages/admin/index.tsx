@@ -71,12 +71,12 @@ export default function AdminDashboard({ admin }) {
       <Head><title>মডারেটর প্যানেল — Nirbhoy</title></Head>
       <AdminHeader email={admin.email} />
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="font-display text-2xl font-semibold text-text-primary">রিপোর্ট কিউ</h1>
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <h1 className="font-display text-xl sm:text-2xl font-semibold text-text-primary">রিপোর্ট কিউ</h1>
 
           {/* Search bar */}
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-72 lg:w-80">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 text-text-faint pointer-events-none"
               width="14"
@@ -114,35 +114,37 @@ export default function AdminDashboard({ admin }) {
         </div>
 
         {/* Status tabs + search result count */}
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-6 border-b border-border">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setStatus(t.key)}
-                className={`relative pb-2 font-body text-xs transition-colors ${
-                  status === t.key
-                    ? "text-accent"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                {t.label}
-                {status === t.key && (
-                  <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-16 bg-accent rounded-full" />
-                )}
-              </button>
-            ))}
+        <div className="mt-4 sm:mt-6 flex items-center justify-between gap-3">
+          <div className="overflow-x-auto scrollbar-none flex-1 min-w-0">
+            <div className="flex gap-4 sm:gap-6 border-b border-border whitespace-nowrap">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setStatus(t.key)}
+                  className={`relative pb-2 font-body text-xs transition-colors shrink-0 ${
+                    status === t.key
+                      ? "text-accent"
+                      : "text-text-muted hover:text-text-primary"
+                  }`}
+                >
+                  {t.label}
+                  {status === t.key && (
+                    <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-12 sm:w-16 bg-accent rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
           {searchQuery && (
-            <span className="font-mono text-xs text-text-faint">
+            <span className="font-mono text-xs text-text-faint shrink-0">
               {filteredItems.length}টি ফলাফল
             </span>
           )}
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-lg border border-border">
+        <div className="mt-4 sm:mt-6 overflow-x-auto rounded-lg border border-border">
           {/* Desktop table */}
-          <div className="hidden md:block">
+          <div className="min-w-[640px]">
             <table className="w-full text-left font-body text-sm">
               <thead>
                 <tr className="border-b border-border bg-elevated text-xs uppercase tracking-wider text-text-faint">

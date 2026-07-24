@@ -108,8 +108,8 @@ export default function AdminUpdatePanel({
   }
 
   return (
-    <div className="card">
-      <h3 className="font-display text-base font-medium text-text-primary">
+    <div className="card !p-4 sm:!p-6">
+      <h3 className="font-display text-sm sm:text-base font-medium text-text-primary">
         কেস টাইমলাইন / আপডেট
       </h3>
       <p className="mt-1 font-body text-xs text-text-muted">
@@ -132,7 +132,7 @@ export default function AdminUpdatePanel({
         <div>
           <label className="field-label !text-xs !mb-1">বার্তা</label>
           <textarea
-            className="field-input min-h-[90px] resize-y"
+            className="field-input min-h-[80px] sm:min-h-[90px] resize-y"
             value={message}
             maxLength={2000}
             onChange={(e) => setMessage(e.target.value)}
@@ -191,7 +191,7 @@ export default function AdminUpdatePanel({
           </p>
         )}
 
-        <button type="submit" disabled={submitting} className="btn-primary text-xs">
+        <button type="submit" disabled={submitting} className="btn-primary text-xs w-full sm:w-auto">
           {submitting ? "$ যোগ করা হচ্ছে..." : "$ আপডেট যোগ করুন"}
         </button>
       </form>

@@ -12,7 +12,7 @@ import { googleMapsLink, osmMapsLink } from "../../../lib/mapLinks";
 const MapView = dynamic(() => import("../../../components/MapView"), {
   ssr: false,
   loading: () => (
-    <div className="rounded-md border border-border bg-elevated/60 h-[300px] flex items-center justify-center">
+    <div className="rounded-md border border-border bg-elevated/60 h-[200px] sm:h-[300px] flex items-center justify-center">
       <p className="font-terminal text-xs text-text-muted animate-pulse">$ loading map...</p>
     </div>
   ),
@@ -90,9 +90,9 @@ function ProofsViewer({
               {selectedProof && (
                 <div className="rounded-md border border-border bg-bg overflow-hidden">
                   {selectedProof.resourceType === "video" ? (
-                    <video src={selectedProof.url} controls className="w-full max-h-[400px] object-contain" />
+                    <video src={selectedProof.url} controls className="w-full max-h-[300px] sm:max-h-[400px] object-contain" />
                   ) : (
-                    <img src={selectedProof.url} alt="Proof" className="w-full max-h-[400px] object-contain" />
+                    <img src={selectedProof.url} alt="Proof" className="w-full max-h-[300px] sm:max-h-[400px] object-contain" />
                   )}
                 </div>
               )}
@@ -102,7 +102,7 @@ function ProofsViewer({
                     key={p.publicId}
                     type="button"
                     onClick={() => setSelectedProof(p)}
-                    className={`relative h-16 w-16 overflow-hidden rounded-md border-2 transition-colors ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 overflow-hidden rounded-md border-2 transition-colors ${
                       selectedProof?.publicId === p.publicId
                         ? "border-accent"
                         : "border-border hover:border-accent/60"
@@ -244,7 +244,7 @@ export default function ReviewComplaint({ admin }) {
     return (
       <>
         <AdminHeader email={admin.email} />
-        <p className="mx-auto max-w-3xl px-6 py-10 font-body text-sm text-text-muted">লোড হচ্ছে…</p>
+        <p className="mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-10 font-body text-sm text-text-muted">লোড হচ্ছে…</p>
       </>
     );
   }
@@ -253,7 +253,7 @@ export default function ReviewComplaint({ admin }) {
     return (
       <>
         <AdminHeader email={admin.email} />
-        <p className="mx-auto max-w-3xl px-6 py-10 font-body text-sm text-danger">{error}</p>
+        <p className="mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-10 font-body text-sm text-danger">{error}</p>
       </>
     );
   }
@@ -263,18 +263,18 @@ export default function ReviewComplaint({ admin }) {
       <Head><title>{complaint.caseId} — Nirbhoy Review</title></Head>
       <AdminHeader email={admin.email} />
 
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex items-center justify-between">
-          <div>
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <span className="font-mono text-xs text-text-faint">{complaint.caseId}</span>
-            <h1 className="mt-1 font-display text-2xl font-semibold text-text-primary">{complaint.title}</h1>
+            <h1 className="mt-1 font-display text-xl sm:text-2xl font-semibold text-text-primary break-words">{complaint.title}</h1>
           </div>
           <StatusBadge status={complaint.status} />
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="card">
-            <h3 className="font-display text-base font-medium text-text-primary">মূল রিপোর্ট (শুধু আপনার জন্য)</h3>
+        <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <div className="card !p-4 sm:!p-6">
+            <h3 className="font-display text-sm sm:text-base font-medium text-text-primary">মূল রিপোর্ট (শুধু আপনার জন্য)</h3>
             <dl className="mt-4 space-y-3 font-body text-sm">
               <div>
                 <dt className="font-mono text-xs text-text-faint">ধরন</dt>
@@ -282,7 +282,7 @@ export default function ReviewComplaint({ admin }) {
               </div>
               <div>
                 <dt className="font-mono text-xs text-text-faint">বিবরণ</dt>
-                <dd className="whitespace-pre-wrap text-text-primary">{complaint.description}</dd>
+                <dd className="whitespace-pre-wrap text-text-primary text-sm break-words">{complaint.description}</dd>
               </div>
               <div>
                 <dt className="font-mono text-xs text-text-faint">স্থান</dt>
@@ -300,7 +300,7 @@ export default function ReviewComplaint({ admin }) {
                       {complaint.locationPrecision === "exact" && "⚡ "}
                       {PRECISION_LABEL[complaint.locationPrecision] || "জেলা স্তর"}
                     </span>
-                    <span className="font-mono text-[11px] text-text-faint">
+                    <span className="font-mono text-[10px] sm:text-[11px] text-text-faint break-all">
                       LAT {complaint.lat.toFixed(6)} · LNG {complaint.lng.toFixed(6)}
                     </span>
                   </dd>
@@ -316,11 +316,11 @@ export default function ReviewComplaint({ admin }) {
 
             {complaint.lat && complaint.lng && (
               <div className="mt-5 border-t border-border pt-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <p className="font-mono text-xs text-text-faint">
                     {complaint.locationPrecision === "exact" ? "📍 ব্যবহারকারী পিন করা লোকেশন" : "📍 আনুমানিক লোকেশন"}
                   </p>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <a href={googleMapsLink(complaint.lat, complaint.lng)} target="_blank" rel="noopener noreferrer"
                       className="rounded-md border border-border px-2 py-0.5 font-mono text-[10px] text-text-muted hover:text-accent hover:border-accent/40 transition-colors">Google Maps ↗</a>
                     <a href={osmMapsLink(complaint.lat, complaint.lng)} target="_blank" rel="noopener noreferrer"
@@ -336,7 +336,7 @@ export default function ReviewComplaint({ admin }) {
                   summary: complaint.description ? complaint.description.substring(0, 120) : "",
                   location: complaint.location, lat: complaint.lat, lng: complaint.lng,
                   locationPrecision: complaint.locationPrecision || "district", publishedAt: complaint.publishedAt || complaint.createdAt,
-                }]} activeCaseId={complaint.caseId} height={320} />
+                }]} activeCaseId={complaint.caseId} height={240} />
               </div>
             )}
 
@@ -347,8 +347,8 @@ export default function ReviewComplaint({ admin }) {
             )}
           </div>
 
-          <div className="card">
-            <h3 className="font-display text-base font-medium text-text-primary">পাবলিক ফিডে যা প্রকাশ হবে</h3>
+          <div className="card !p-4 sm:!p-6">
+            <h3 className="font-display text-sm sm:text-base font-medium text-text-primary">পাবলিক ফিডে যা প্রকাশ হবে</h3>
             <p className="mt-1 font-body text-xs text-text-muted">কোনো নাম বা শনাক্তযোগ্য তথ্য লিখবেন না।</p>
 
             <div className="mt-4 space-y-4">
@@ -358,7 +358,7 @@ export default function ReviewComplaint({ admin }) {
               </div>
               <div>
                 <label className="field-label">পাবলিক সারাংশ</label>
-                <textarea className="field-input min-h-[110px] resize-y" value={publicSummary}
+                <textarea className="field-input min-h-[90px] sm:min-h-[110px] resize-y" value={publicSummary}
                   onChange={(e) => setPublicSummary(e.target.value)}
                   placeholder="যেমন: এলাকায় একটি চুরির ঘটনা রিপোর্ট হয়েছে এবং স্থানীয় প্রশাসনকে জানানো হয়েছে।" />
               </div>
@@ -370,7 +370,7 @@ export default function ReviewComplaint({ admin }) {
                 <div className="flex items-start gap-3 rounded-md border border-border p-3">
                   <input id="proofsVisible" type="checkbox" checked={proofsVisible}
                     onChange={(e) => setProofsVisible(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-borderStrong bg-elevated text-accent focus:ring-accent/40" />
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-borderStrong bg-elevated text-accent focus:ring-accent/40" />
                   <div>
                     <label htmlFor="proofsVisible" className="cursor-pointer font-code text-sm font-medium text-text-primary">প্রমাণ প্রকাশ করুন</label>
                     <p className="mt-0.5 font-code text-xs text-text-muted">চেক করলে ব্যবহারকারী তার রিপোর্টের পাবলিক পেজে প্রমাণ (ছবি/ভিডিও) দেখতে পাবেন। ব্যক্তিগত তথ্য থাকলে চেক করবেন না।</p>
@@ -382,21 +382,21 @@ export default function ReviewComplaint({ admin }) {
             {successMsg && <div className="mt-3 rounded-md border border-accent/30 bg-accent-soft/40 px-4 py-3"><p className="font-body text-sm text-accent">{successMsg}</p></div>}
             {error && <div className="mt-3 rounded-md border border-danger/40 bg-danger-soft px-4 py-3"><p className="font-body text-sm text-danger">{error}</p></div>}
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button onClick={() => updateStatus("reviewing")} disabled={saving} className="btn-secondary text-xs relative">
+            <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2">
+              <button onClick={() => updateStatus("reviewing")} disabled={saving} className="btn-secondary text-xs relative w-full sm:w-auto">
                 {saving && actionType === "reviewing" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> যাচাই চলছে...</> : "যাচাই চলছে চিহ্নিত করুন"}
               </button>
-              <button onClick={() => updateStatus("published")} disabled={saving} className="btn-primary text-xs relative">
+              <button onClick={() => updateStatus("published")} disabled={saving} className="btn-primary text-xs relative w-full sm:w-auto">
                 {saving && actionType === "published" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রকাশ হচ্ছে...</> : "প্রকাশ করুন"}
               </button>
-              <button onClick={() => updateStatus("rejected")} disabled={saving} className="btn-secondary text-xs !border-danger/40 !text-danger relative">
+              <button onClick={() => updateStatus("rejected")} disabled={saving} className="btn-secondary text-xs !border-danger/40 !text-danger relative w-full sm:w-auto">
                 {saving && actionType === "rejected" ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" /> প্রত্যাখ্যান হচ্ছে...</> : "প্রত্যাখ্যান করুন"}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-6 sm:mt-8">
           <AdminUpdatePanel complaintId={complaint.id} publishedAt={complaint.publishedAt} />
         </div>
       </section>
