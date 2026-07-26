@@ -397,7 +397,19 @@ export default function Feed() {
                     {item.title}
                   </h3>
                   {item.summary && (
-                    <p className="mt-2 font-code text-sm leading-relaxed text-text-muted">{item.summary}</p>
+                    <div className="mt-2">
+                      <p className="font-code text-sm leading-relaxed text-text-muted line-clamp-2">
+                        {item.summary}
+                      </p>
+                      {item.summary.length > 120 && (
+                        <Link
+                          href={`/case/${item.caseId}`}
+                          className="mt-1 inline-flex items-center gap-1 font-terminal text-[11px] text-accent hover:text-accent-bright transition-colors"
+                        >
+                          আরও পড়ুন →
+                        </Link>
+                      )}
+                    </div>
                   )}
                 </Link>
                 <div className="mt-4 flex items-center justify-between font-terminal text-xs text-text-faint">
