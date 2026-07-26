@@ -52,9 +52,44 @@ export default function App({ Component, pageProps }) {
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1"
       )) {
-        navigator.serviceWorker.register("/sw.js").catch(() => {
-          // SW registration failed silently — app works without it
+        let registration: ServiceWorkerRegistration | null = null;
+
+        navigator.serviceWorker.register("/sw.js")
+          .then((reg) => {
+            registration = reg;
+
+            // Detect new SW waiting to activate — update immediately
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+
+            // When a new SW is found, update immediately
+            reg.addEventListener("updatefound", () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener("statechange", () => {
+                  if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                    // New SW installed — activate it
+                    newWorker.postMessage({ type: "SKIP_WAITING" });
+                  }
+                });
+              }
+            });
+          })
+          .catch(() => {
+            // SW registration failed silently — app works without it
+          });
+
+        // Listen for messages from SW (e.g., update notification)
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data?.type === "RELOAD_ACROSS_REVISIONS") {
+            window.location.reload();
+          }
         });
+
+        return () => {
+          // Cleanup not needed for SW registration
+        };
       }
     }
   }, []);

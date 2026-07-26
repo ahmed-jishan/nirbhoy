@@ -4,15 +4,15 @@
  * Cache strategy:
  * - Static assets (CSS, JS, fonts, icons): Cache-first (offline-ready)
  * - API responses: Network-first with fallback to cache
- * - Pages: Network-first with offline fallback
+ * - Pages: Stale-while-revalidate (serve cached instantly, update in background)
  * 
  * This SW is registered conditionally — only when the browser supports it
  * and the app is served over HTTPS or localhost.
  */
 
-const CACHE_NAME = "nirbhoy-v2";
-const STATIC_CACHE = "nirbhoy-static-v2";
-const API_CACHE = "nirbhoy-api-v2";
+const CACHE_NAME = "nirbhoy-v3";
+const STATIC_CACHE = "nirbhoy-static-v3";
+const API_CACHE = "nirbhoy-api-v3";
 
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -92,13 +92,15 @@ self.addEventListener("fetch", (event) => {
 
   // Strategy 2: API calls — Network-first with timeout
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirstWithTimeout(request, 3000));
+    event.respondWith(networkFirstWithTimeout(request, 5000));
     return;
   }
 
-  // Strategy 3: Navigation requests (pages) — Network-first with offline fallback
+  // Strategy 3: Navigation requests (pages) — Stale-while-revalidate
+  // Serve cached version immediately, then update in background.
+  // Only show offline page if there's truly no cached version AND network fails.
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstWithFallback(request, "/offline"));
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
@@ -175,26 +177,63 @@ async function networkFirstWithTimeout(request, ms) {
 }
 
 /**
- * Network-first with fallback page on failure.
+ * Stale-while-revalidate for navigation requests.
+ * 
+ * 1. Return cached version immediately (if available) — no waiting for network.
+ * 2. Fetch fresh version from network in the background.
+ * 3. If no cache exists, try network with a generous timeout.
+ * 4. Only show offline page if both cache AND network fail.
  */
-async function networkFirstWithFallback(request, fallbackUrl) {
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request);
+  
+  // If we have a cached version, return it immediately and update in background
+  if (cached) {
+    // Background revalidation — don't block the page load
+    caches.open(CACHE_NAME).then((cache) => {
+      fetchWithTimeout(request, 8000).then((response) => {
+        if (response && response.ok) {
+          cache.put(request, response);
+        }
+      }).catch(() => {
+        // Network failed during revalidation — cached version is still fine
+      });
+    });
+    return cached;
+  }
+  
+  // No cache available — try network with a generous timeout
   try {
-    const response = await fetch(request);
-    if (response.ok) {
+    const response = await fetchWithTimeout(request, 10000);
+    if (response && response.ok) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
+      return response;
     }
-    // If the response is a 404/500 from server, serve our offline page
-    if (!response.ok && response.status >= 400) {
-      const fallback = await caches.match(fallbackUrl);
-      if (fallback) return fallback;
-    }
+    // Server returned an error (4xx/5xx) — show the error page
+    if (response) return response;
+  } catch {
+    // Network completely unavailable — show offline page
+  }
+  
+  // Last resort: try to serve the offline page from cache
+  const offlinePage = await caches.match("/offline");
+  return offlinePage || new Response("Offline", { status: 503 });
+}
+
+/**
+ * Fetch with a timeout. Returns null on timeout/error.
+ */
+async function fetchWithTimeout(request, ms) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
+  
+  try {
+    const response = await fetch(request, { signal: controller.signal });
     return response;
   } catch {
-    const fallback = await caches.match(fallbackUrl);
-    if (fallback) return fallback;
-    // Last resort: try any cached version
-    const cached = await caches.match(request);
-    return cached || new Response("Offline", { status: 503 });
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
