@@ -70,17 +70,42 @@ export default function Feed() {
 
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError("");
     setActiveCaseId(null);
-    fetch(`/api/complaints?type=${typeFilter}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.error) throw new Error(d.error);
-        setItems(d.items || []);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+
+    // Fetch with automatic retry — a single transient failure (serverless
+    // cold start, brief network blip) shouldn't surface as an offline error.
+    // We retry up to 2 times with a short backoff before giving up.
+    async function loadComplaints(attempt = 0) {
+      try {
+        const res = await fetch(`/api/complaints?type=${typeFilter}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        if (!cancelled) {
+          setItems(data.items || []);
+          setLoading(false);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        if (attempt < 2) {
+          // Exponential-ish backoff: 600ms, then 1200ms.
+          setTimeout(() => loadComplaints(attempt + 1), 600 * (attempt + 1));
+          return;
+        }
+        setError(e instanceof Error ? e.message : "লোড করতে সমস্যা হয়েছে");
+        setLoading(false);
+      }
+    }
+
+    loadComplaints();
+
+    return () => {
+      cancelled = true;
+    };
   }, [typeFilter]);
 
   // Build the list of districts that actually appear in the fetched items.

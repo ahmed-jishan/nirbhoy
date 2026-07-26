@@ -153,23 +153,53 @@ async function networkFirst(request) {
 }
 
 /**
- * Network-first with timeout: try network for ms ms, then cache.
+ * Network-first with timeout for API calls.
+ *
+ * IMPORTANT: We must NOT fabricate a fake "offline" response just because
+ * the network is slow. A fresh visitor has no cached API data, so a slow
+ * server (e.g. serverless cold start) would otherwise produce a bogus
+ * offline error on the very first load — which then disappears on refresh.
+ *
+ * Behaviour:
+ *   - If a cached response exists → race network against `ms`; on timeout
+ *     serve the cache instantly while the network keeps updating it.
+ *   - If no cache exists → wait for the real network response, however long
+ *     it takes. Only return the offline payload if the network genuinely
+ *     fails (device offline / DNS error / connection refused).
  */
 async function networkFirstWithTimeout(request, ms) {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Timeout")), ms)
-  );
+  const cached = await caches.match(request);
 
-  try {
-    const response = await Promise.race([fetch(request), timeoutPromise]);
-    if (response.ok) {
-      const cache = await caches.open(API_CACHE);
-      cache.put(request, response.clone());
+  // Kick off the network request and cache successful responses.
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        caches.open(API_CACHE).then((cache) => {
+          cache.put(request, response.clone());
+        });
+      }
+      return response;
+    });
+
+  // With a cached copy available, fall back to it quickly on slow networks.
+  if (cached) {
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve(cached), ms)
+    );
+    try {
+      return await Promise.race([networkPromise, timeoutPromise]);
+    } catch {
+      // Network errored before the timeout — serve the cache.
+      return cached;
     }
-    return response;
+  }
+
+  // No cache — wait for the genuine network result. Never fabricate offline
+  // on a slow-but-working connection.
+  try {
+    return await networkPromise;
   } catch {
-    const cached = await caches.match(request);
-    return cached || new Response(JSON.stringify({ error: "অফলাইন" }), {
+    return new Response(JSON.stringify({ error: "অফলাইন" }), {
       status: 503,
       headers: { "Content-Type": "application/json" },
     });

@@ -43,6 +43,49 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export default function App({ Component, pageProps }) {
+  // Suppress noisy errors injected by browser extensions (MetaMask, wallet
+  // providers, etc.). These come from `chrome-extension://…` scripts running
+  // in the page context — they are NOT our code and must never surface as an
+  // app-level runtime error or reach Sentry.
+  useEffect(() => {
+    const isExtensionError = (source, message) => {
+      const s = String(source || "");
+      const m = String(message || "");
+      return (
+        s.includes("chrome-extension://") ||
+        s.includes("moz-extension://") ||
+        s.includes("safari-extension://") ||
+        m.includes("MetaMask") ||
+        m.includes("ethereum") ||
+        m.includes("web3")
+      );
+    };
+
+    const onError = (event) => {
+      if (isExtensionError(event.filename, event.message)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    const onRejection = (event) => {
+      const reason = event.reason;
+      const message = reason?.message || reason;
+      const stack = reason?.stack || "";
+      if (isExtensionError(stack, message)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("error", onError, true);
+    window.addEventListener("unhandledrejection", onRejection);
+
+    return () => {
+      window.removeEventListener("error", onError, true);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
+
   // Register service worker for PWA support
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -52,12 +95,8 @@ export default function App({ Component, pageProps }) {
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1"
       )) {
-        let registration: ServiceWorkerRegistration | null = null;
-
         navigator.serviceWorker.register("/sw.js")
           .then((reg) => {
-            registration = reg;
-
             // Detect new SW waiting to activate — update immediately
             if (reg.waiting) {
               reg.waiting.postMessage({ type: "SKIP_WAITING" });
